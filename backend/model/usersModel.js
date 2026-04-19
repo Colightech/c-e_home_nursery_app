@@ -42,13 +42,13 @@ const userSchema = new mongoose.Schema(
         enum: ["super-admin", "admin", "caregiver", "parent"],
         default: "parent",
         },
-        daycareId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Daycare",
-        },
         permissions: {
             type: [String],
             default: []
+        },
+        daycareId : {
+            type: mongoose.Schema.Types.ObjectId,
+            ref : "Daycare"
         },
         gender: {
             type: String,
