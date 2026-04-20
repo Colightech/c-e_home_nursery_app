@@ -3,7 +3,7 @@
 
 # BACKEND
 1. npm init
-2. npm i express express-fileupload express-openid-connect express-session mongodb validator dotenv mongoose jsonwebtoken cookie-parser bcrypt nodemon -D cors
+2. npm i express express-fileupload express-openid-connect express-session mongodb validator dotenv mongoose jsonwebtoken cookie-parser bcrypt nodemon -D cors crypto
 7. npm i cloudinary
 12. npm i helmet
 13. npm install axios dotenv

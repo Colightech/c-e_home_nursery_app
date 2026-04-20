@@ -1,10 +1,10 @@
 const {generateAccessToken, generateRefreshToken} = require("./generateToken");
 
 
-const setCookies = (res, admin) => {
+const setCookies = (res, user) => {
 
-  const accessToken = generateAccessToken(admin);
-  const refreshToken = generateRefreshToken(admin);
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
 
    // Access Token (short)
   res.cookie("accessToken", accessToken, {

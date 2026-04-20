@@ -5,6 +5,8 @@ const logAudit = require("../utils/auditLogger");
 const setCookies = require("../utils/setCookies");
 const { generateAccessToken } = require("../utils/generateToken");
 const childModel = require("../model/childModel");
+const sendEmail = require("../lib/sendEmail");
+const generateOtp = require("../lib/generateOtp");
 
 
 
@@ -569,6 +571,221 @@ const refreshAccessToken = async (req, res) => {
 
 
 
+
+// ACCOUNT VERIFICATION CONTROLLERS
+const verifyEmail = async (req, res) => {
+  try {
+    const { token, id } = req.query;
+
+    // Basic validation
+    if (!token || !id) {
+      return res.status(400).json({
+        error: true,
+        message: "Token and user ID are required."
+      });
+    }
+
+     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await userModel.findOne({
+      _id : id,
+      verificationOtp : hashedToken,
+      verificationOtpExpiresAt : { $gt: Date.now() } // not expired
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        error: true,
+        message: "Invalid or expired token."
+      });
+    }
+
+    user.isVerified = true;
+    user.verificationOtp = "";
+    user.verificationOtpExpiresAt = 0;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfully. You can now log in."
+    });
+  } catch (error) {
+    console.error("Email verification error:", error);
+    res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
+};
+
+
+
+const resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        error: true,
+        message: "Email is required."
+      });
+    }
+
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        error: true,
+        message: "User not found"
+      });
+    }
+    if (user.isVerified) {
+      return res.status(400).json({
+        error: true,
+        message: "User already verified"
+      });
+    }
+
+    const resendOtp = generateOtp();
+     const hashedToken = crypto.createHash("sha256").update(resendOtp).digest("hex");
+    user.verificationOtp = hashedToken;
+    user.verificationOtpExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
+    await user.save();
+
+
+    const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${resendOtp}&id=${user._id}`;
+    const title = "Verify Your Email Address";
+    const desc = `Hello ${user.name || 'there'},
+      Please click the link below to verify your email address:
+      ${verifyUrl}
+      This link will expire in 24 hours.
+      If you didn't request this, please ignore this email.`;
+
+    await sendEmail(email, title, desc);
+
+    res.status(200).json({
+      success: true,
+      message: "Verification email resent"
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: true,
+      message: err.message
+    });
+  }
+};
+
+
+// PASSWORD RESET
+// Generate reset password Otp and send
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        error: true,
+        message: "User not found"
+      });
+    }
+
+    // Generate reset token
+    const resetOtp = generateOtp();
+    const hashedToken = crypto.createHash("sha256").update(resetOtp).digest("hex");
+      
+
+    // Store hashed token + expiry in DB
+    user.passwordResetOtp = hashedToken;
+    user.passwordResetOtpExpiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+    await user.save();
+
+    // Reset link
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetOtp}&id=${user._id}`;
+
+
+    const title = "Password Reset Request";
+    const message = `
+      Hello ${user.firstName},
+      You requested to reset your password. Please use the link below:
+      ${resetUrl}
+      This link is valid for 15 minutes.
+    `;
+
+    await sendEmail(user.email, title, message);
+
+    return res.status(200).json({
+      error: false,
+      message: "Password reset email sent successfully",
+    });
+
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return res.status(500).json({error: true,
+      message: "Server error"
+    });
+  }
+};
+
+
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token, id } = req.query; // token & id from reset link
+    const { newPassword } = req.body;
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await userModel.findOne({
+      _id: id,
+      passwordResetOtp: hashedToken,
+      passwordResetOtpExpiresAt: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        error: true,
+        message: "Invalid or expired token",
+      });
+    }
+
+    user.password = newPassword;
+
+    // Clear reset fields
+    user.passwordResetOtp = "";
+    user.passwordResetOtpExpiresAt = 0;
+    await user.save();
+
+    await logAudit({
+      action: `RESET_PASSWORD_${user.role.toUpperCase()}`,
+      entityId: user._id,
+      entityName: `${user.firstName} ${user.lastName}`, 
+      status: "success",
+      metadata: {
+        time: new Date(),
+        device: "web",
+      },
+      source: "auth",
+      req,
+    });
+
+    return res.status(200).json({
+      success : true,
+      message: "Password has been reset successfully",
+    });
+    
+  } catch (error) {
+    console.error("Reset password error:", error);
+    return res.status(500).json({
+      error: true,
+      message: "Server error"
+    });
+  }
+};
+
+
+
+
 module.exports = {
     registerUser,
     loginUser,
@@ -580,5 +797,7 @@ module.exports = {
     softDeleteUser,
     reactivateUser,
     refreshAccessToken,
+
+    verifyEmail,
 }
 
