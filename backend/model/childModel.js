@@ -66,13 +66,13 @@ const childSchema = new mongoose.Schema(
         },
         address: {
             type: String,
-            required: true,
         },
         homeLanguage: String,
+
         pickupPassword: String,
+        
         dateOfBirth: {
             type: String,
-            required: true,
         },
         parentId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -97,4 +97,6 @@ const childSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-module.exports = mongoose.model("Child", childSchema);
+const childModel = mongoose.model("Child", childSchema);
+
+module.exports = childModel;

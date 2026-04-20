@@ -1,3 +1,6 @@
+const mongoose = require("mongoose");
+
+
 const daycareSchema = new mongoose.Schema(
   {
     name: {
@@ -29,3 +32,9 @@ const daycareSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+
+const daycareModel = mongoose.model("Daycare", daycareSchema);
+
+
+module.exports = daycareModel;

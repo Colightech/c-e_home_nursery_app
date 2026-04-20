@@ -2,6 +2,7 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const usersModel = require("../model/usersModel");
+const rolePermissions = require("../lib/rolePermissions");
 
 
 
@@ -120,4 +121,19 @@ const caregiverRoute = (req, res, next) => {
 };
 
 
-module.exports = { protectRoute, restrictTo, superAdminRoute, adminRoute, caregiverRoute};
+
+
+const checkPermission = (permission) => {
+  return (req, res, next) => {
+    const userPermissions = rolePermissions(req.user.role);
+
+    if (!userPermissions.includes(permission)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    next();
+  };
+};
+
+
+module.exports = { protectRoute, restrictTo, superAdminRoute, adminRoute, caregiverRoute, checkPermission};
