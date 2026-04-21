@@ -1,9 +1,7 @@
-const crypto = require("crypto");
 
 function generateOtp() {
     
-    const otp = crypto.randomBytes(32).toString("hex");
-    return otp;
+  return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit
 }
 
 module.exports = generateOtp;

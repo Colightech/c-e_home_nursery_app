@@ -7,6 +7,8 @@ const { generateAccessToken } = require("../utils/generateToken");
 const childModel = require("../model/childModel");
 const sendEmail = require("../lib/sendEmail");
 const generateOtp = require("../lib/generateOtp");
+const sendVerificationEmail = require("../lib/sendVerificationEmail");
+const validateChildBusinessRules = require("../lib/validateChildBusinessRules");
 
 
 
@@ -14,11 +16,11 @@ const generateOtp = require("../lib/generateOtp");
 // REGISTER ADMIN
 const registerUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, phone, address, phone, 
-        profilePicture, role, dateOfBirth, gender } = req.body;
+    const { firstName, lastName, email, password, address, phone, 
+        profilePicture, role, dateOfBirth, gender, child } = req.body;
 
     // basic required
-    if (!firstName || !lastName || !email || !password || !role) {
+    if (!firstName || !lastName || !email || !password || !role || !phone) {
       return res.status(400).json({
         error: true,
         message: "firstName, lastName, email, password, and role are required.",
@@ -76,13 +78,24 @@ const registerUser = async (req, res) => {
       email,
       password,
       phone,
+      address,
+      profilePicture,
       role,
+      dateOfBirth,
+      gender
     });
 
 
-    if ( user.role === "parent") {
-        await childModel.create(req.body)
+    //CHILD CREATION
+    if (role === "parent" && child) {
+      validateChildBusinessRules(child); //validate ONLY child
+      await childModel.create({
+        ...child,
+        parentId: user._id
+      });
     }
+
+    await sendVerificationEmail(email);
 
 
     await logAudit({
@@ -304,7 +317,6 @@ const getAllChildren = async (req, res) => {
   }
 };
 
-
 // Admin updates any user
 const updateUser = async (req, res) => {
   try {
@@ -390,8 +402,6 @@ const updateUser = async (req, res) => {
   }
 };
 
-
-
 const deleteUser = async (req, res) => {
   try {
     const user = await userModel.findByIdAndDelete(req.params.id);
@@ -433,7 +443,6 @@ const deleteUser = async (req, res) => {
     });
   }
 };
-
 
 // Instead of permanently deleting user it is better to deactivate the user
 // so that the record remaine in the system for audit and future reference
@@ -484,9 +493,6 @@ const softDeleteUser = async (req, res) => {
   }
 };
 
-
-
-
 const reactivateUser = async (req, res) => {
   try {
     const user = await userModel.findById(req.params.id);
@@ -532,9 +538,6 @@ const reactivateUser = async (req, res) => {
   }
 };
 
-
-
-
 const refreshAccessToken = async (req, res) => {
   try {
     const token = req.cookies.refreshToken;
@@ -572,52 +575,44 @@ const refreshAccessToken = async (req, res) => {
 
 
 
-// ACCOUNT VERIFICATION CONTROLLERS
+// ACCOUNT VERIFICATION CONTROLLER
 const verifyEmail = async (req, res) => {
   try {
-    const { token, id } = req.query;
+    const { email, otp } = req.body;
 
-    // Basic validation
-    if (!token || !id) {
+    if (!email || !otp) {
       return res.status(400).json({
         error: true,
-        message: "Token and user ID are required."
+        message: "Email and Otp are required."
       });
     }
 
-     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
 
     const user = await userModel.findOne({
-      _id : id,
-      verificationOtp : hashedToken,
-      verificationOtpExpiresAt : { $gt: Date.now() } // not expired
+      email,
+      verificationOtp: hashedOtp,
+      verificationOtpExpiresAt: { $gt: Date.now() }
     });
 
     if (!user) {
       return res.status(400).json({
-        error: true,
-        message: "Invalid or expired token."
+        message: "Invalid or expired OTP"
       });
     }
 
+    // mark verified
     user.isVerified = true;
-    user.verificationOtp = "";
-    user.verificationOtpExpiresAt = 0;
+    user.verificationOtp = null;
+    user.verificationOtpExpiresAt = null;
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Email verified successfully. You can now log in."
-    });
+    res.json({ message: "Email verified successfully" });
+
   } catch (error) {
-    console.error("Email verification error:", error);
-    res.status(500).json({
-      error: true,
-      message: error.message
-    });
+    res.status(500).json({ message: error.message });
   }
 };
-
 
 
 const resendVerificationEmail = async (req, res) => {
@@ -646,22 +641,33 @@ const resendVerificationEmail = async (req, res) => {
       });
     }
 
-    const resendOtp = generateOtp();
-     const hashedToken = crypto.createHash("sha256").update(resendOtp).digest("hex");
-    user.verificationOtp = hashedToken;
-    user.verificationOtpExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
+    //Prevent OTP spam (60 seconds cooldown)
+    if (
+      user.otpLastSentAt &&
+      Date.now() - user.otpLastSentAt < 60 * 1000
+    ) {
+      throw new Error("Please wait before requesting another OTP");
+    }
+    const otp = generateOtp();
+    const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
+    const expiresAt = Date.now() + 15 * 60 * 1000;
+
+    user.verificationOtp = hashedOtp;
+    user.verificationOtpExpiresAt = expiresAt;
+    user.otpLastSentAt = Date.now();
     await user.save();
 
-
-    const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${resendOtp}&id=${user._id}`;
     const title = "Verify Your Email Address";
-    const desc = `Hello ${user.name || 'there'},
-      Please click the link below to verify your email address:
-      ${verifyUrl}
-      This link will expire in 24 hours.
-      If you didn't request this, please ignore this email.`;
+    const message = `
+        Hello ${user.firstName},
 
-    await sendEmail(email, title, desc);
+        Your verification code is: ${otp}
+
+        ⏳ This code will expire in 15 minutes.
+
+        If you didn't request this, please ignore this email.`;
+
+    await sendEmail(user.email, title, message);
 
     res.status(200).json({
       success: true,
@@ -676,7 +682,6 @@ const resendVerificationEmail = async (req, res) => {
 };
 
 
-// PASSWORD RESET
 // Generate reset password Otp and send
 const forgotPassword = async (req, res) => {
   try {
@@ -690,28 +695,29 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    // Generate reset token
-    const resetOtp = generateOtp();
-    const hashedToken = crypto.createHash("sha256").update(resetOtp).digest("hex");
-      
+   //Prevent OTP spam (60 seconds cooldown)
+    if (
+      user.otpLastSentAt &&
+      Date.now() - user.otpLastSentAt < 60 * 1000
+    ) {
+      throw new Error("Please wait before requesting another OTP");
+    }
+    const otp = generateOtp();
+    const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
+    const expiresAt = Date.now() + 15 * 60 * 1000;
 
-    // Store hashed token + expiry in DB
-    user.passwordResetOtp = hashedToken;
-    user.passwordResetOtpExpiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+    user.passwordResetOtp = hashedOtp;
+    user.passwordResetOtpExpiresAt = expiresAt;
+    user.otpLastSentAt = Date.now();
     await user.save();
-
-    // Reset link
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetOtp}&id=${user._id}`;
-
 
     const title = "Password Reset Request";
     const message = `
-      Hello ${user.firstName},
-      You requested to reset your password. Please use the link below:
-      ${resetUrl}
-      This link is valid for 15 minutes.
-    `;
-
+        Hello ${user.firstName},
+	      You requested to reset your password.
+        Your reset code is: ${otp}
+        ⏳ This code will expire in 15 minutes.
+        If you didn't request this, please ignore this email.`;
     await sendEmail(user.email, title, message);
 
     return res.status(200).json({
@@ -728,32 +734,36 @@ const forgotPassword = async (req, res) => {
 };
 
 
-
 const resetPassword = async (req, res) => {
   try {
-    const { token, id } = req.query; // token & id from reset link
-    const { newPassword } = req.body;
+    const { email, otp, newPassword } = req.body;
 
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    if (!email || !otp) {
+      return res.status(400).json({
+        error: true,
+        message: "Email, Otp and new password are required."
+      });
+    }
+
+    const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
 
     const user = await userModel.findOne({
-      _id: id,
-      passwordResetOtp: hashedToken,
-      passwordResetOtpExpiresAt: { $gt: Date.now() },
-    });
+      email,
+      passwordResetOtp: hashedOtp,
+      passwordResetOtpExpiresAt: { $gt: Date.now() }
+    }).select("+password");
 
     if (!user) {
       return res.status(400).json({
-        error: true,
-        message: "Invalid or expired token",
+        message: "Invalid or expired OTP"
       });
     }
 
     user.password = newPassword;
 
     // Clear reset fields
-    user.passwordResetOtp = "";
-    user.passwordResetOtpExpiresAt = 0;
+    user.passwordResetOtp = null;
+    user.passwordResetOtpExpiresAt = null;
     await user.save();
 
     await logAudit({
@@ -771,7 +781,7 @@ const resetPassword = async (req, res) => {
 
     return res.status(200).json({
       success : true,
-      message: "Password has been reset successfully",
+      message: "Password reset successfully",
     });
     
   } catch (error) {
@@ -799,5 +809,8 @@ module.exports = {
     refreshAccessToken,
 
     verifyEmail,
+    resendVerificationEmail,
+    forgotPassword,
+    resetPassword,
 }
 

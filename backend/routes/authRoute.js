@@ -34,7 +34,6 @@ router.post("/register", protectRoute, checkPermission("create_user"), registerU
 
 //PUBLIC
 router.post("/login", loginUser);
-//TO BE IMPLEMENTED
 router.get("/verify-email", verifyEmail);
 router.post("/resend-verification", resendVerificationEmail);
 router.post("/forgot-password", forgotPassword);
