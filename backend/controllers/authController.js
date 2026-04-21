@@ -1,6 +1,6 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
-const userModel = require("../model/userModel");
+const usersModel = require("../model/usersModel");
 const logAudit = require("../utils/auditLogger");
 const setCookies = require("../utils/setCookies");
 const { generateAccessToken } = require("../utils/generateToken");
@@ -9,6 +9,8 @@ const sendEmail = require("../lib/sendEmail");
 const generateOtp = require("../lib/generateOtp");
 const sendVerificationEmail = require("../lib/sendVerificationEmail");
 const validateChildBusinessRules = require("../lib/validateChildBusinessRules");
+const rolePermissions = require("../lib/rolePermissions");
+const getDevice = require("../lib/getDevice");
 
 
 
@@ -17,7 +19,7 @@ const validateChildBusinessRules = require("../lib/validateChildBusinessRules");
 const registerUser = async (req, res) => {
   try {
     const { firstName, lastName, email, password, address, phone, 
-        profilePicture, role, dateOfBirth, gender, child } = req.body;
+        profilePicture, role, dateOfBirth, gender, daycareId, child } = req.body;
 
     // basic required
     if (!firstName || !lastName || !email || !password || !role || !phone) {
@@ -55,7 +57,7 @@ const registerUser = async (req, res) => {
     }
 
     // Check if exists
-    const existing = await userModel.findOne({ email });
+    const existing = await usersModel.findOne({ email });
     if (existing) {
       return res.status(400).json({
         error: true,
@@ -64,7 +66,7 @@ const registerUser = async (req, res) => {
     }
 
     // Check if phone is already registered
-    const existingPhone = await userModel.findOne({ phone });
+    const existingPhone = await usersModel.findOne({ phone });
     if (existingPhone) {
       return res.status(400).json({
         error: true,
@@ -72,7 +74,7 @@ const registerUser = async (req, res) => {
       });
     }
 
-    const user = await userModel.create({
+    const user = await usersModel.create({
       firstName,
       lastName,
       email,
@@ -82,7 +84,9 @@ const registerUser = async (req, res) => {
       profilePicture,
       role,
       dateOfBirth,
-      gender
+      gender,
+      daycareId,
+      permissions: rolePermissions(role)
     });
 
 
@@ -97,6 +101,7 @@ const registerUser = async (req, res) => {
 
     await sendVerificationEmail(email);
 
+    const device = getDevice(req);
 
     await logAudit({
       action: "REGISTER",
@@ -105,7 +110,8 @@ const registerUser = async (req, res) => {
       status: "success",
       metadata: {
         time: new Date(),
-        device: "web",
+        device: device.platform,
+        deviceId: device.deviceId
       },
       source: "auth",
       req,
@@ -148,9 +154,7 @@ const loginUser = async (req, res) => {
     }
 
     // Include password explicitly
-    const user = await userModel
-      .findOne({ email })
-      .select("+password");
+    const user = await usersModel.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(400).json({
@@ -317,94 +321,114 @@ const getAllChildren = async (req, res) => {
   }
 };
 
+
 // Admin updates any user
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
+    const {
+      firstName,
+      lastName,
+      email,
+      address,
+      phone,
+      profilePicture,
+      dateOfBirth,
+      gender,
+      daycareId,
+      child
+    } = req.body;
 
-    // Common fields always in userModel
-    const { firstName, lastName, email, phone, address, phone, 
-        profilePicture, dateOfBirth, gender } = req.body;
-
-    const oldUser = await userModel.findById(id);
+    const oldUser = await usersModel.findById(id);
     if (!oldUser) {
       return res.status(404).json({
         error: true,
-        message: "oldUser not found"
+        message: "User not found"
       });
     }
 
-    const updatedUser  = await userModel.findByIdAndUpdate(
-      id,
-      { firstName, lastName, email, phone, address, phone, 
-        profilePicture, dateOfBirth, gender },
-      { new: true, runValidators: true }
-    ).select("-password");
+    // Only update provided fields
+    const updatePayload = {};
+    if (firstName) updatePayload.firstName = firstName;
+    if (lastName) updatePayload.lastName = lastName;
+    if (email) updatePayload.email = email;
+    if (address) updatePayload.address = address;
+    if (phone) updatePayload.phone = phone;
+    if (profilePicture) updatePayload.profilePicture = profilePicture;
+    if (dateOfBirth) updatePayload.dateOfBirth = dateOfBirth;
+    if (gender) updatePayload.gender = gender;
+    if (daycareId) updatePayload.daycareId = daycareId;
 
-    if (!updatedUser) {
-      return res.status(404).json({ error: true, message: "User not found" });
-    }
- 
+    const updatedUser = await usersModel
+      .findByIdAndUpdate(id, updatePayload, {
+        new: true,
+        runValidators: true
+      })
+      .select("-password");
 
-    // Cascade updates based on parent role
-    if (updatedUser.role === "parent") {
-        await childModel.findByIdAndUpdate(
-        {parentId : updatedUser._id},
-        req.body,
-        { new: true, runValidators: true }
+    // CHILD UPDATE (FIXED)
+    if (updatedUser.role === "parent" && child) {
+      validateChildBusinessRules(child);
+
+      await childModel.updateMany(
+        { parentId: updatedUser._id }, // ✅ correct filter
+        { $set: child },               // ✅ correct update syntax
+        { runValidators: true }
       );
     }
-    // Create audit log
+
+    // AUDIT LOG (FIXED)
     await logAudit({
       action: `UPDATE_${updatedUser.role.toUpperCase()}`,
-      entityId: user._id,
-      entityName: `${updatedUser.firstName} ${updatedUser.lastName}`, 
+      entityId: updatedUser._id,
+      entityName: `${updatedUser.firstName} ${updatedUser.lastName}`,
       status: "success",
       metadata: {
         time: new Date(),
         device: "web",
       },
       source: "auth",
-      req,
       details: {
         before: {
           firstName: oldUser.firstName,
           lastName: oldUser.lastName,
           phone: oldUser.phone,
-          role : oldUser.role
+          role: oldUser.role
         },
         after: {
           firstName: updatedUser.firstName,
           lastName: updatedUser.lastName,
           phone: updatedUser.phone,
-          role : updatedUser.role
+          role: updatedUser.role
         },
-        updatedBy : {
-          firstName : req.user.firstName,
-          lastName : req.user.lastName,
-          email : req.user.email,
-          role : req.user.role
+        updatedBy: {
+          firstName: req.user.firstName,
+          lastName: req.user.lastName,
+          email: req.user.email,
+          role: req.user.role
         }
-      },
-      req
+      }
     });
-    res.status(200).json({
+
+    return res.status(200).json({
       success: true,
       message: "User updated successfully",
-      user : updatedUser
+      user: updatedUser
     });
 
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       error: true,
       message: err.message
     });
   }
 };
 
+
+
 const deleteUser = async (req, res) => {
   try {
-    const user = await userModel.findByIdAndDelete(req.params.id);
+    const user = await usersModel.findById(req.params.id);
 
     if (!user) {
       return res.status(404).json({
@@ -413,31 +437,40 @@ const deleteUser = async (req, res) => {
       });
     }
 
+    //delete ALL children if parent
+    if (user.role === "parent") {
+      await childModel.deleteMany({ parentId: user._id });
+    }
+
+    //hard delete user
+    await usersModel.findByIdAndDelete(user._id);
+
+    //audit log
     await logAudit({
-      action: `DELETE_${user.role.toUpperCase()}`, // DELETE_PARENT
+      action: `HARD_DELETE_${user.role.toUpperCase()}`,
       entityId: user._id,
-      entityName: `${user.firstName} ${user.lastName}`, 
+      entityName: `${user.firstName} ${user.lastName}`,
       status: "success",
       metadata: {
         time: new Date(),
         device: "web",
-        deletedBy : { 
-          firstName : req.user.firstName,
-          email : req.user.email,
-          role : req.user.role,
+        deletedBy: {
+          firstName: req.user.firstName,
+          email: req.user.email,
+          role: req.user.role,
         }
       },
       source: "auth",
       req,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "User and related profile deleted"
+      message: "User permanently deleted"
     });
 
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       error: true,
       message: error.message
     });
@@ -446,97 +479,131 @@ const deleteUser = async (req, res) => {
 
 // Instead of permanently deleting user it is better to deactivate the user
 // so that the record remaine in the system for audit and future reference
-const softDeleteUser = async (req, res) => {
+const softDeleteUser  = async (req, res) => {
   try {
-    const user = await userModel.findById(req.params.id);
-    if (!user) return res.status(404).json({
-      error: true,
-      message: "User not found"
-    });
+    const user = await usersModel.findById(req.params.id);
 
-    // Deactivate user
-    await userModel.findByIdAndUpdate(user._id, {
-      isActive: false,
-      deletedAt: new Date(),
-      deletedBy: req.user._id
-    }, { new: true });
+    if (!user) {
+      return res.status(404).json({
+        error: true,
+        message: "User not found"
+      });
+    }
 
+    //delete children (if parent)
+    if (user.role === "parent") {
+      await childModel.updateMany(
+        { parentId: user._id },
+        {
+          isActive: false,
+          deletedAt: new Date(),
+          deletedBy: req.user._id
+        }
+      );
+    }
 
+    // 👤 soft delete user
+    user.isActive = false;
+    user.deletedAt = new Date();
+    user.deletedBy = req.user._id;
+    await user.save();
+
+    // 🧾 audit log
     await logAudit({
-      action: `SOFT_DELETE_${user.role.toUpperCase()}`, // DELETE_PARENT
+      action: `DELETE_${user.role.toUpperCase()}`,
       entityId: user._id,
-      entityName: `${user.firstName} ${user.lastName}`, 
+      entityName: `${user.firstName} ${user.lastName}`,
       status: "success",
       metadata: {
         time: new Date(),
         device: "web",
-        deletedBy : { 
-          firstName : req.user.firstName,
-          email : req.user.email,
-          role : req.user.role,
+        deletedBy: {
+          firstName: req.user.firstName,
+          email: req.user.email,
+          role: req.user.role,
         }
       },
       source: "auth",
       req,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "User deactivated (soft-deleted)"
-    });
-
-  } catch (e) {
-    res.status(500).json({
-      error: true,
-      message: e.message
-    });
-  }
-};
-
-const reactivateUser = async (req, res) => {
-  try {
-    const user = await userModel.findById(req.params.id);
-    if (!user) return res.status(404).json({
-      error: true,
-      message: "User not found"
-    });
-
-    await userModel.findByIdAndUpdate(user._id, {
-      isActive: true,
-      deletedAt: null,
-      deletedBy: null
-    });
-
-     await logAudit({
-      action: `ACTIVATE_${user.role.toUpperCase()}`, // DELETE_PARENT
-      entityId: user._id,
-      entityName: `${user.firstName} ${user.lastName}`, 
-      status: "success",
-      metadata: {
-        time: new Date(),
-        device: "web",
-        deletedBy : { 
-          firstName : req.user.firstName,
-          email : req.user.email,
-          role : req.user.role,
-        }
-      },
-      source: "auth",
-      req,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "User reactivated"
+      message: "User deactivated successfully"
     });
 
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       error: true,
       message: error.message
     });
   }
 };
+
+
+
+const reactivateUser  = async (req, res) => {
+  try {
+    const user = await usersModel.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        error: true,
+        message: "User not found"
+      });
+    }
+
+    //delete children (if parent)
+    if (user.role === "parent") {
+      await childModel.updateMany(
+        { parentId: user._id },
+        {
+          isActive: true,
+          deletedAt: null,
+          deletedBy: null,
+        }
+      );
+    }
+
+    //soft delete user
+    user.isActive = true;
+    user.deletedAt = null;
+    user.deletedBy = null;
+    await user.save();
+
+    // audit log
+    await logAudit({
+      action: `DELETE_${user.role.toUpperCase()}`,
+      entityId: user._id,
+      entityName: `${user.firstName} ${user.lastName}`,
+      status: "success",
+      metadata: {
+        time: new Date(),
+        device: "web",
+        deletedBy: {
+          firstName: req.user.firstName,
+          email: req.user.email,
+          role: req.user.role,
+        }
+      },
+      source: "auth",
+      req,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "User deactivated successfully"
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
+};
+
+
 
 const refreshAccessToken = async (req, res) => {
   try {
@@ -548,7 +615,7 @@ const refreshAccessToken = async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_TOKEN);
 
-    const user = await userModel.findById(decoded.id);
+    const user = await usersModel.findById(decoded.id);
 
     if (!user) {
       return res.status(401).json({ message: "Invalid refresh token" });
@@ -626,7 +693,7 @@ const resendVerificationEmail = async (req, res) => {
       });
     }
 
-    const user = await userModel.findOne({ email });
+    const user = await usersModel.findOne({ email });
 
     if (!user) {
       return res.status(404).json({
@@ -687,7 +754,7 @@ const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    const user = await userModel.findOne({ email });
+    const user = await usersModel.findOne({ email });
     if (!user) {
       return res.status(404).json({
         error: true,
@@ -747,7 +814,7 @@ const resetPassword = async (req, res) => {
 
     const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
 
-    const user = await userModel.findOne({
+    const user = await usersModel.findOne({
       email,
       passwordResetOtp: hashedOtp,
       passwordResetOtpExpiresAt: { $gt: Date.now() }

@@ -12,6 +12,7 @@ const auditLogSchema = new mongoose.Schema(
         "LOGOUT",
         "UPDATE",
         "DELETE",
+        "HARD_DELETE",
         "SOFT_DELETE",
         "ACTIVATE",
         "RESET_PASSWORD",

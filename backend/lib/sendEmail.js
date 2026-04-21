@@ -6,8 +6,8 @@ async function sendEmail(to, subject, text) {
   try {
     let transporter = nodemailer.createTransport({
       host : "smtp-relay.brevo.com",  // or your SMTP provider
-      port : 465,
-      secure : true, //true for 465, and false for other port
+      port : 587,
+      secure : false, //true for 465, and false for other port
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS

@@ -1,4 +1,4 @@
-const permissions = require("./permissions");
+const permissions = require("./permissionList");
 
 const rolePermissions = (role) => {
   return permissions[role] || [];

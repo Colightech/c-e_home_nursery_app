@@ -11,9 +11,6 @@ const {
   logoutUser,            // admin (hard delete if you support it)
   softDeleteUser,     // admin
   reactivateUser,     // admin
-  getUserPermissions,    // admin
-  addUserPermission,     // admin
-  removeUserPermission,  // admin
   verifyEmail,
   resendVerificationEmail,
   forgotPassword,
@@ -21,7 +18,6 @@ const {
 } = require("../controllers/authController");
 
 const { protectRoute } = require("../middlewares/middleWare");
-const authorize = require("../middlewares/authorize");
 const { checkPermission } = require("../middlewares/middleware");
 
 
@@ -53,10 +49,5 @@ router.put("/:id/reactivate",   protectRoute, checkPermission("update_user"),   
 router.get("/children",         protectRoute, checkPermission("view_users"),     getAllChildren);
 
 
-
- // Permissions management (admin-only)
-router.get("/:id/permissions",             protectRoute, checkPermission(""), getUserPermissions);
-router.patch("/:id/permissions/add",       protectRoute, checkPermission(""), addUserPermission);
-router.patch("/:id/permissions/remove",    protectRoute, checkPermission(""), removeUserPermission);
 
 module.exports = router;

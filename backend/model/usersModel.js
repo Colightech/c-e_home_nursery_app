@@ -37,9 +37,10 @@ const userSchema = new mongoose.Schema(
             default: '',
         },
         role: {
-        type: String,
-        enum: ["super-admin", "admin", "caregiver", "parent"],
-        default: "parent",
+            type: String,
+            required : true,
+            enum: ["super-admin", "admin", "caregiver", "parent"],
+            default: "parent",
         },
         permissions: {
             type: [String],
@@ -79,7 +80,7 @@ const userSchema = new mongoose.Schema(
             default : '',
         },
         passwordResetOtpExpiresAt : {
-            type : String,
+            type : Number,
             default : 0
         },
         // Common soft-delete fields

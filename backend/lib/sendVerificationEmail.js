@@ -28,7 +28,7 @@ const sendVerificationEmail = async (email) => {
     user.otpLastSentAt = Date.now();
     await user.save();
 
-    const title = "Verify Your Email Address";
+    const title = "Account created, verify Your Email Address";
     const message = `
         Hello ${user.firstName},
 
