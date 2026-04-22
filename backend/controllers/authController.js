@@ -1,5 +1,7 @@
 require("dotenv").config();
+const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const usersModel = require("../model/usersModel");
 const logAudit = require("../utils/auditLogger");
 const setCookies = require("../utils/setCookies");
@@ -74,30 +76,54 @@ const registerUser = async (req, res) => {
       });
     }
 
-    const user = await usersModel.create({
-      firstName,
-      lastName,
-      email,
-      password,
-      phone,
-      address,
-      profilePicture,
-      role,
-      dateOfBirth,
-      gender,
-      daycareId,
-      permissions: rolePermissions(role)
-    });
+  
+    let user; 
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      // validate first
+      if (role === "parent") {
+        if (!child || !child.firstName || !child.lastName) {
+          throw new Error("Child information is required for parent registration");
+        }
+        validateChildBusinessRules(child);
+      }
+      // create user
+      const createdUser = await usersModel.create([{
+        firstName,
+        lastName,
+        email,
+        password,
+        phone,
+        address,
+        profilePicture,
+        role,
+        dateOfBirth,
+        gender,
+        daycareId,
+        permissions: rolePermissions(role)
+      }], { session });
 
+      user = createdUser[0]; 
 
-    //CHILD CREATION
-    if (role === "parent" && child) {
-      validateChildBusinessRules(child); //validate ONLY child
-      await childModel.create({
-        ...child,
-        parentId: user._id
+      // create child
+      if (role === "parent") {
+        await childModel.create([{
+          ...child,
+          parentId: user._id
+        }], { session });
+      }
+      await session.commitTransaction();
+      session.endSession();
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        error: true,
+        message: error.message
       });
     }
+
 
     await sendVerificationEmail(email);
 
@@ -313,8 +339,8 @@ const getAllChildren = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      count: users.length,
-      users,
+      count: children.length,
+      children,
     });
   } catch (err) {
     res.status(500).json({ error: true, message: err.message });
@@ -323,7 +349,110 @@ const getAllChildren = async (req, res) => {
 
 
 // Admin updates any user
+// const updateUser = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const {
+//       firstName,
+//       lastName,
+//       email,
+//       address,
+//       phone,
+//       profilePicture,
+//       dateOfBirth,
+//       gender,
+//       daycareId,
+//       child
+//     } = req.body;
+
+//     const oldUser = await usersModel.findById(id);
+//     if (!oldUser) {
+//       return res.status(404).json({
+//         error: true,
+//         message: "User not found"
+//       });
+//     }
+
+//     // Only update provided fields
+//     const updatePayload = {};
+//     if (firstName) updatePayload.firstName = firstName;
+//     if (lastName) updatePayload.lastName = lastName;
+//     if (email) updatePayload.email = email;
+//     if (address) updatePayload.address = address;
+//     if (phone) updatePayload.phone = phone;
+//     if (profilePicture) updatePayload.profilePicture = profilePicture;
+//     if (dateOfBirth) updatePayload.dateOfBirth = dateOfBirth;
+//     if (gender) updatePayload.gender = gender;
+//     if (daycareId) updatePayload.daycareId = daycareId;
+
+//     const updatedUser = await usersModel
+//       .findByIdAndUpdate(id, updatePayload, {
+//         new: true,
+//         runValidators: true
+//       })
+//       .select("-password");
+
+//     // CHILD UPDATE (FIXED)
+//     if (updatedUser.role === "parent" && child) {
+//       validateChildBusinessRules(child);
+
+//       await childModel.updateMany(
+//         { parentId: updatedUser._id }, // ✅ correct filter
+//         { $set: child },               // ✅ correct update syntax
+//         { runValidators: true }
+//       );
+//     }
+
+//     // AUDIT LOG (FIXED)
+//     await logAudit({
+//       action: `UPDATE_${updatedUser.role.toUpperCase()}`,
+//       entityId: updatedUser._id,
+//       entityName: `${updatedUser.firstName} ${updatedUser.lastName}`,
+//       status: "success",
+//       metadata: {
+//         time: new Date(),
+//         device: "web",
+//       },
+//       source: "auth",
+//       details: {
+//         before: {
+//           firstName: oldUser.firstName,
+//           lastName: oldUser.lastName,
+//           phone: oldUser.phone,
+//           role: oldUser.role
+//         },
+//         after: {
+//           firstName: updatedUser.firstName,
+//           lastName: updatedUser.lastName,
+//           phone: updatedUser.phone,
+//           role: updatedUser.role
+//         },
+//         updatedBy: {
+//           firstName: req.user.firstName,
+//           lastName: req.user.lastName,
+//           email: req.user.email,
+//           role: req.user.role
+//         }
+//       }
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "User updated successfully",
+//       user: updatedUser
+//     });
+
+//   } catch (err) {
+//     return res.status(500).json({
+//       error: true,
+//       message: err.message
+//     });
+//   }
+// };
+
+
 const updateUser = async (req, res) => {
+  let session;
   try {
     const { id } = req.params;
     const {
@@ -339,6 +468,7 @@ const updateUser = async (req, res) => {
       child
     } = req.body;
 
+    // 🔹 1. Find user first
     const oldUser = await usersModel.findById(id);
     if (!oldUser) {
       return res.status(404).json({
@@ -347,7 +477,20 @@ const updateUser = async (req, res) => {
       });
     }
 
-    // Only update provided fields
+
+    // Validate child ONLY if needed
+    if (oldUser.role === "parent") {
+      if (!child || !child.firstName || !child.lastName) {
+          throw new Error("Child information is required for parent update");
+        }
+      validateChildBusinessRules(child);
+    }
+
+    // 🔹 3. START TRANSACTION
+    session = await mongoose.startSession();
+    session.startTransaction();
+
+    // 🔹 4. Build update payload
     const updatePayload = {};
     if (firstName) updatePayload.firstName = firstName;
     if (lastName) updatePayload.lastName = lastName;
@@ -359,35 +502,42 @@ const updateUser = async (req, res) => {
     if (gender) updatePayload.gender = gender;
     if (daycareId) updatePayload.daycareId = daycareId;
 
-    const updatedUser = await usersModel
-      .findByIdAndUpdate(id, updatePayload, {
+    // 🔹 5. Update USER
+    const updatedUser = await usersModel.findByIdAndUpdate(
+      id,
+      updatePayload,
+      {
         new: true,
-        runValidators: true
-      })
-      .select("-password");
+        runValidators: true,
+        session
+      }
+    ).select("-password");
 
-    // CHILD UPDATE (FIXED)
+    // 🔹 6. Update CHILD (only if parent)
     if (updatedUser.role === "parent" && child) {
-      validateChildBusinessRules(child);
-
       await childModel.updateMany(
-        { parentId: updatedUser._id }, // ✅ correct filter
-        { $set: child },               // ✅ correct update syntax
-        { runValidators: true }
+        { parentId: updatedUser._id },
+        { $set: child },
+        { runValidators: true, session }
       );
     }
 
-    // AUDIT LOG (FIXED)
+    // 🔹 7. COMMIT TRANSACTION
+    await session.commitTransaction();
+    session.endSession();
+
+    // 🔹 8. AUDIT LOG
     await logAudit({
-      action: `UPDATE_${updatedUser.role.toUpperCase()}`,
+      action: "UPDATE",
       entityId: updatedUser._id,
       entityName: `${updatedUser.firstName} ${updatedUser.lastName}`,
       status: "success",
       metadata: {
         time: new Date(),
-        device: "web",
+        device: "mobile"
       },
       source: "auth",
+      req,
       details: {
         before: {
           firstName: oldUser.firstName,
@@ -400,12 +550,6 @@ const updateUser = async (req, res) => {
           lastName: updatedUser.lastName,
           phone: updatedUser.phone,
           role: updatedUser.role
-        },
-        updatedBy: {
-          firstName: req.user.firstName,
-          lastName: req.user.lastName,
-          email: req.user.email,
-          role: req.user.role
         }
       }
     });
@@ -417,6 +561,11 @@ const updateUser = async (req, res) => {
     });
 
   } catch (err) {
+    if (session) {
+      await session.abortTransaction();
+      session.endSession();
+    }
+
     return res.status(500).json({
       error: true,
       message: err.message
@@ -447,7 +596,7 @@ const deleteUser = async (req, res) => {
 
     //audit log
     await logAudit({
-      action: `HARD_DELETE_${user.role.toUpperCase()}`,
+      action: "HARD_DELETE",
       entityId: user._id,
       entityName: `${user.firstName} ${user.lastName}`,
       status: "success",
@@ -502,7 +651,7 @@ const softDeleteUser  = async (req, res) => {
       );
     }
 
-    // 👤 soft delete user
+    //soft delete user
     user.isActive = false;
     user.deletedAt = new Date();
     user.deletedBy = req.user._id;
@@ -510,7 +659,7 @@ const softDeleteUser  = async (req, res) => {
 
     // 🧾 audit log
     await logAudit({
-      action: `DELETE_${user.role.toUpperCase()}`,
+      action: "SOFT_DELETE",
       entityId: user._id,
       entityName: `${user.firstName} ${user.lastName}`,
       status: "success",
@@ -573,14 +722,14 @@ const reactivateUser  = async (req, res) => {
 
     // audit log
     await logAudit({
-      action: `DELETE_${user.role.toUpperCase()}`,
+      action: "RE_ACTIVATE",
       entityId: user._id,
       entityName: `${user.firstName} ${user.lastName}`,
       status: "success",
       metadata: {
         time: new Date(),
         device: "web",
-        deletedBy: {
+        activatedBy: {
           firstName: req.user.firstName,
           email: req.user.email,
           role: req.user.role,
@@ -592,7 +741,7 @@ const reactivateUser  = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "User deactivated successfully"
+      message: "User re-activated successfully"
     });
 
   } catch (error) {
@@ -656,7 +805,7 @@ const verifyEmail = async (req, res) => {
 
     const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
 
-    const user = await userModel.findOne({
+    const user = await usersModel.findOne({
       email,
       verificationOtp: hashedOtp,
       verificationOtpExpiresAt: { $gt: Date.now() }
@@ -684,7 +833,7 @@ const verifyEmail = async (req, res) => {
 
 const resendVerificationEmail = async (req, res) => {
   try {
-    const { email } = req.body;
+  const { email } = req.body;
 
     if (!email) {
       return res.status(400).json({
@@ -717,7 +866,7 @@ const resendVerificationEmail = async (req, res) => {
     }
     const otp = generateOtp();
     const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
-    const expiresAt = Date.now() + 15 * 60 * 1000;
+    const expiresAt = Date.now() + 60 * 60 * 1000;
 
     user.verificationOtp = hashedOtp;
     user.verificationOtpExpiresAt = expiresAt;
@@ -730,7 +879,7 @@ const resendVerificationEmail = async (req, res) => {
 
         Your verification code is: ${otp}
 
-        ⏳ This code will expire in 15 minutes.
+        ⏳ This code will expire in 60 minutes.
 
         If you didn't request this, please ignore this email.`;
 
@@ -788,13 +937,14 @@ const forgotPassword = async (req, res) => {
     await sendEmail(user.email, title, message);
 
     return res.status(200).json({
-      error: false,
+      success: true,
       message: "Password reset email sent successfully",
     });
 
   } catch (error) {
     console.error("Forgot password error:", error);
-    return res.status(500).json({error: true,
+    return res.status(500).json({
+      error: true,
       message: "Server error"
     });
   }
@@ -834,7 +984,7 @@ const resetPassword = async (req, res) => {
     await user.save();
 
     await logAudit({
-      action: `RESET_PASSWORD_${user.role.toUpperCase()}`,
+      action: "RESET_PASSWORD",
       entityId: user._id,
       entityName: `${user.firstName} ${user.lastName}`, 
       status: "success",

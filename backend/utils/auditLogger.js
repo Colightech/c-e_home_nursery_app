@@ -28,7 +28,9 @@ const logAudit = async ({
       metadata,
       source,
       ip: getClientIp(req),
-      userAgent: req?.headers?.["user-agent"] || "worker/system", // ✅ FIXED
+      userAgent: req?.headers?.["user-agent"] || "worker/system",
+      method: req?.method,
+      url: req?.originalUrl
     });
   } catch (err) {
     console.error("Audit log failed:", err.message);

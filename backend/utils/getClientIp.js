@@ -1,28 +1,19 @@
 
-// const getClientIp = (req) => {
-//   if (!req) return;
 
-//   return (
-//     req.headers?.["x-forwarded-for"]?.split(",")[0] ||
-//     req.socket?.remoteAddress ||
-//     req.ip ||
-//     "unknown"
-//   );
-// };
-
-
-
+const normalizeIp = (ip) => {
+  if (!ip) return "unknown";
+  return ip.startsWith("::ffff:") ? ip.replace("::ffff:", "") : ip;
+};
 
 const getClientIp = (req) => {
   if (!req) return "unknown";
 
-  return (
+  const rawIp =
     req.headers?.["x-forwarded-for"]?.split(",")[0]?.trim() ||
     req.socket?.remoteAddress ||
-    req.ip ||
-    "unknown"
-  );
-};
+    req.ip;
 
+  return normalizeIp(rawIp);
+};
 
 module.exports = getClientIp;

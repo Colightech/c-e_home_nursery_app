@@ -7,6 +7,7 @@ const basePermissions = {
     "view_child",
     "assign_caregiver",
     "view_attendance",
+    "create_activity",
     "view_activity",
     "send_message",
     "view_message"
@@ -16,9 +17,7 @@ const basePermissions = {
     "view_child",
     "mark_attendance",
     "view_attendance",
-    "create_activity",
     "view_activity",
-    "update_activity",
     "upload_child_media",
     "send_message",
     "view_message"
@@ -29,7 +28,8 @@ const basePermissions = {
     "view_attendance",
     "view_activity",
     "send_message",
-    "view_message"
+    "view_message",
+    "view_users"
   ]
 };
 
@@ -47,6 +47,7 @@ const superAdminExtras = [
     "delete_child",
     "update_user",
     "update_child",
+    "update_activity",
 ];
 
 

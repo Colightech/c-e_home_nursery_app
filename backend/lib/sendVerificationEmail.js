@@ -21,7 +21,7 @@ const sendVerificationEmail = async (email) => {
 
     const otp = generateOtp();
     const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
-    const expiresAt = Date.now() + 15 * 60 * 1000;
+    const expiresAt = Date.now() + 60 * 60 * 1000;
 
     user.verificationOtp = hashedOtp;
     user.verificationOtpExpiresAt = expiresAt;
@@ -36,7 +36,7 @@ const sendVerificationEmail = async (email) => {
 
         Your verification code is: ${otp}
 
-        ⏳ This code will expire in 15 minutes.
+        ⏳ This code will expire in 60 minutes.
 
         If you didn't request this, please ignore this email.`;
 

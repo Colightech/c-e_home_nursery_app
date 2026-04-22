@@ -128,7 +128,7 @@ const checkPermission = (permission) => {
     const userPermissions = rolePermissions(req.user.role);
 
     if (!userPermissions.includes(permission)) {
-      return res.status(403).json({ message: "Forbidden" });
+      return res.status(403).json({ message: "Forbidden! Access denied." });
     }
 
     next();
