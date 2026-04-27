@@ -348,109 +348,8 @@ const getAllChildren = async (req, res) => {
 };
 
 
+
 // Admin updates any user
-// const updateUser = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const {
-//       firstName,
-//       lastName,
-//       email,
-//       address,
-//       phone,
-//       profilePicture,
-//       dateOfBirth,
-//       gender,
-//       daycareId,
-//       child
-//     } = req.body;
-
-//     const oldUser = await usersModel.findById(id);
-//     if (!oldUser) {
-//       return res.status(404).json({
-//         error: true,
-//         message: "User not found"
-//       });
-//     }
-
-//     // Only update provided fields
-//     const updatePayload = {};
-//     if (firstName) updatePayload.firstName = firstName;
-//     if (lastName) updatePayload.lastName = lastName;
-//     if (email) updatePayload.email = email;
-//     if (address) updatePayload.address = address;
-//     if (phone) updatePayload.phone = phone;
-//     if (profilePicture) updatePayload.profilePicture = profilePicture;
-//     if (dateOfBirth) updatePayload.dateOfBirth = dateOfBirth;
-//     if (gender) updatePayload.gender = gender;
-//     if (daycareId) updatePayload.daycareId = daycareId;
-
-//     const updatedUser = await usersModel
-//       .findByIdAndUpdate(id, updatePayload, {
-//         new: true,
-//         runValidators: true
-//       })
-//       .select("-password");
-
-//     // CHILD UPDATE (FIXED)
-//     if (updatedUser.role === "parent" && child) {
-//       validateChildBusinessRules(child);
-
-//       await childModel.updateMany(
-//         { parentId: updatedUser._id }, // ✅ correct filter
-//         { $set: child },               // ✅ correct update syntax
-//         { runValidators: true }
-//       );
-//     }
-
-//     // AUDIT LOG (FIXED)
-//     await logAudit({
-//       action: `UPDATE_${updatedUser.role.toUpperCase()}`,
-//       entityId: updatedUser._id,
-//       entityName: `${updatedUser.firstName} ${updatedUser.lastName}`,
-//       status: "success",
-//       metadata: {
-//         time: new Date(),
-//         device: "web",
-//       },
-//       source: "auth",
-//       details: {
-//         before: {
-//           firstName: oldUser.firstName,
-//           lastName: oldUser.lastName,
-//           phone: oldUser.phone,
-//           role: oldUser.role
-//         },
-//         after: {
-//           firstName: updatedUser.firstName,
-//           lastName: updatedUser.lastName,
-//           phone: updatedUser.phone,
-//           role: updatedUser.role
-//         },
-//         updatedBy: {
-//           firstName: req.user.firstName,
-//           lastName: req.user.lastName,
-//           email: req.user.email,
-//           role: req.user.role
-//         }
-//       }
-//     });
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "User updated successfully",
-//       user: updatedUser
-//     });
-
-//   } catch (err) {
-//     return res.status(500).json({
-//       error: true,
-//       message: err.message
-//     });
-//   }
-// };
-
-
 const updateUser = async (req, res) => {
   let session;
   try {
@@ -507,7 +406,7 @@ const updateUser = async (req, res) => {
       id,
       updatePayload,
       {
-        new: true,
+        returnDocument: "after",
         runValidators: true,
         session
       }
