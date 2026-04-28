@@ -312,7 +312,6 @@ const getCurrentUser = async (req, res) => {
         message: "user not found",
       });
     }
-
     return res.status(200).json({
       success: true,
       data: {
