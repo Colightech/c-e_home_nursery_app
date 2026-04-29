@@ -52,10 +52,12 @@ const useAuthStore = create<AuthState>()(
       //LOGOUT
       logout: async () => {
         try {
-            await axiosInstance.post("/auth/logout");
+          await axiosInstance.post("/auth/logout");
         } catch (e) {}
-            set({ user: null });
+        set({ user: null });
+        await AsyncStorage.removeItem("auth-storage"); // 🔥 important
       },
+
     }),
     {
       name: "auth-storage",
