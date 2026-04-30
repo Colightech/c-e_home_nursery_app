@@ -20,7 +20,7 @@ import styles from "../../style/auth/addUserStyle";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 
-const AddUserScreen = () => {
+    const AddUserScreen = () => {
 
 const navigation = useNavigation<NavigationProp>();
 
@@ -84,6 +84,55 @@ const navigation = useNavigation<NavigationProp>();
       return () => clearTimeout(timer);
     }
   }, [success, error]);
+
+  // =========== CLEAR FORM FIELDS ============
+  const resetForm = () => {
+    setRole("parent")
+    setFirstName("");
+    setLastName("");
+    setEmail("");
+    setPassword("");
+    setAddress("");
+    setPhone("");
+    setGender("male");
+    setDateOfBirth("");
+
+    // child
+    setChildFirstName("");
+    setChildLastName("");
+    setChildAddress("");
+    setHomeLanguage("");
+    setPickupPassword("");
+    setChildDob("");
+
+    // emergency
+    setEmName("");
+    setEmPhone("");
+    setEmAddress("");
+    setEmRelationship("");
+
+    //== AUTHORIZED CONTACT ====
+    setAuthName("");
+    setAuthAddress("");
+    setAuthRelationship("");
+    setHasLegalRight(false);
+    setAuthDetails("");
+
+    //==== MEDICAL ===
+    setHasAllergies(false);
+    setAllergyDetails("");
+
+    setHasCondition(false);
+    setConditionDetails("");
+
+    setVaccinationsUpToDate(false);
+    setVaccinationDetails("");
+
+    // === DOCTOR =====
+    setDoctorName("");
+    setDoctorPhone("");
+    setDoctorAddress("");
+  }
 
   // ================= SUBMIT =================
   const handleSubmit = async () => {
@@ -151,6 +200,7 @@ const navigation = useNavigation<NavigationProp>();
     
      const res = await register(payload);
     if (res?.error) return; //stop if failed
+    resetForm();
   };
 
   return (
@@ -265,8 +315,6 @@ const navigation = useNavigation<NavigationProp>();
 };
 
 export default AddUserScreen;
-
-
 
 
 
