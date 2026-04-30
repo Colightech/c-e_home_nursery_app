@@ -3,6 +3,7 @@ export type AuthState = {
   user: User | null;
   loading: boolean;
   error: string | null;
+  success: string | null;
 
   login: (email: string, password: string) => Promise<any>;
   checkAuth: () => Promise<User>;

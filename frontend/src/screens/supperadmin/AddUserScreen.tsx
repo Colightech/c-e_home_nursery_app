@@ -1,53 +1,5 @@
 
-// import React, { useState, useEffect } from "react";
-// import {
-//   View,
-//   TextInput,
-//   Button,
-//   Text,
-//   TouchableOpacity,
-//   ImageBackground,
-//   Image,
-//   KeyboardAvoidingView,
-//   ScrollView,
-//   Platform,
-// } from "react-native";
-
-// import styles from "../../style/supperadmin/addUserStyle";
-// import useAuthStore from "../../store/useAuthStore";
-// import { useNavigation } from "@react-navigation/native";
-// import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-// import type { RootStackParamList } from "../../navigation/types";
-// import Ionicons from "react-native-vector-icons/Ionicons";
-
-// type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-// const AddUserScreen = () => {
-
-
-
-//   const navigation = useNavigation<NavigationProp>();
-
-//   return (
-//     <View
-//       style={styles.container}
-//     >
-//         <TouchableOpacity
-//             onPress={() => navigation.replace("supperadmin")}
-//         >
-//             <Ionicons name="chevron-back" size={35} color="black" />
-//         </TouchableOpacity>
-//         <Text>register user</Text>
-//     </View>
-//   );
-// };
-
-// export default AddUserScreen;
-
-
-
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -75,10 +27,10 @@ const navigation = useNavigation<NavigationProp>();
   const register = useAuthStore((s) => s.register);
   const loading = useAuthStore((s) => s.loading);
   const error = useAuthStore((s) => s.error);
+  const success = useAuthStore((s) => s.success);
 
   // ================= USER =================
   const [role, setRole] = useState("parent");
-
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -123,6 +75,15 @@ const navigation = useNavigation<NavigationProp>();
   const [doctorName, setDoctorName] = useState("");
   const [doctorPhone, setDoctorPhone] = useState("");
   const [doctorAddress, setDoctorAddress] = useState("");
+
+  useEffect(() => {
+    if (success || error) {
+      const timer = setTimeout(() => {
+        useAuthStore.setState({ success: null, error: null });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, error]);
 
   // ================= SUBMIT =================
   const handleSubmit = async () => {
@@ -187,7 +148,9 @@ const navigation = useNavigation<NavigationProp>();
       };
     }
 
-    await register(payload);
+    
+     const res = await register(payload);
+    if (res?.error) return; //stop if failed
   };
 
   return (
@@ -216,6 +179,11 @@ const navigation = useNavigation<NavigationProp>();
       <TextInput style={styles.userInputStyle} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
       <TextInput style={styles.userInputStyle} placeholder="Address" value={address} onChangeText={setAddress} />
       <TextInput style={styles.userInputStyle} placeholder="Phone" value={phone} onChangeText={setPhone} />
+       <Text >Select Gender</Text>
+      <Picker style={styles.userInputStyle} selectedValue={gender} onValueChange={setGender}>
+        <Picker.Item label="Nale" value="male" />
+        <Picker.Item label="Female" value="female" />
+      </Picker>
       <TextInput style={styles.userInputStyle}placeholder="DOB" value={dateOfBirth} onChangeText={setDateOfBirth} />
 
       {/* ================= CHILD SECTION ================= */}
@@ -279,6 +247,12 @@ const navigation = useNavigation<NavigationProp>();
       )}
 
       {error && <Text style={{ color: "red" }}>{error}</Text>}
+
+      {success && (
+        <Text style={{ color: "green", marginBottom: 10 }}>
+          {success}
+        </Text>
+      )}
 
       <View style={styles.buttonStyle}>
         <Button

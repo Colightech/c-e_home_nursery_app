@@ -13,6 +13,7 @@ const useAuthStore = create<AuthState>()(
       user: null,
       loading: false,
       error: null,
+      success: null,
 
 
       // LOGIN
@@ -38,7 +39,10 @@ const useAuthStore = create<AuthState>()(
         try {
           const res = await axiosInstance.post("/auth/register", data);
 
-          set({ loading: false });
+          set({ 
+            loading: false,
+            success: "User created successfully",
+           });
           return res.data;
 
         } catch (error) {
@@ -46,7 +50,7 @@ const useAuthStore = create<AuthState>()(
             ? error.response?.data?.message || error.message
             : "Something went wrong";
 
-          set({ error: message, loading: false });
+          set({ error: message, loading: false, success: null });
           return { error: true, message };
         }
       },
