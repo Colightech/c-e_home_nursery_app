@@ -51,28 +51,28 @@ const LoginScreen = () => {
 
   
   const handleLogin = async () => {
-      
+
       if (!email.trim()) return setEmailError("Email is required");
       if (!password.trim()) return setPasswordError("Password is required");
 
       setEmailError("");
       setPasswordError("");
 
-      setCheckingSession(true);
       const res = await login(email, password);
 
       if (res?.error) return;
       
       const user = await useAuthStore.getState().checkAuth();
-      setCheckingSession(false);
 
       if (user) {
           redirectByRole(user.role, navigation);
       }
   };
 
-  
-  if (checkingSession) return (<Text style={styles.checkinSesiion}>Loading....</Text>);
+
+  if (checkingSession) {
+    return <Text style={styles.checkingSession}>Loading....</Text>;
+  }
 
   return (
     <ImageBackground

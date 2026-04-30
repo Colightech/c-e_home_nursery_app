@@ -25,6 +25,7 @@
 3. npm install @react-native-async-storage/async-storage zustand
 4. npm install @react-navigation/native  @react-navigation/native-stack  react-native-screens  react-native-safe-area-context
 5. npm install react-native-vector-icons
+6. npm install @react-native-picker/picker
 ## npx react-native log-android
 
 

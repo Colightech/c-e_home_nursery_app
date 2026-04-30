@@ -3,7 +3,7 @@ import { StyleSheet  } from 'react-native';
 
 
 const styles = StyleSheet.create({
-        checkinSesiion : {
+        checkingSession : {
             fontSize: 30,
             marginTop: 350,
             marginLeft: 140,

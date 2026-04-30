@@ -9,6 +9,7 @@ import type { RootStackParamList } from "../../navigation/types";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import styles from '../../style/supperadmin/settingsStyle';
 import useAuthStore from "../../store/useAuthStore";
+import Avatar from '../../components/Avater';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -19,6 +20,9 @@ const SupperAdminSetting = () => {
    const navigation = useNavigation<NavigationProp>()
 
    const logout = useAuthStore((state) => state.logout);
+   const user = useAuthStore((state) => state.user);
+
+   console.log("user response", user);
 
   const handleLogout = async () => {
     await logout();
@@ -31,23 +35,35 @@ const SupperAdminSetting = () => {
       <View >
         <TouchableOpacity
           onPress={() => navigation.replace("supperadmin")}
+          style={styles.backIcon}
         >
           <Ionicons name="chevron-back" size={35} color="black" />
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.logoutContainer}
-          onPress={handleLogout}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="log-out-outline" size={25} color="black" />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+        <View style={styles.subContainer}>
+          <View style={styles.profileContainer}>
+             <Avatar 
+              imageUrl=''  
+              name={user?.name}
+            />
+            <View>
+                <Text><Text style={styles.profileDetails}>Name: </Text>{user?.name}</Text>
+                <Text><Text style={styles.profileDetails}>Role: </Text>{user?.role}</Text>
+                <Text><Text style={styles.profileDetails}>Email: </Text>{user?.email}</Text>
+            </View>
+          </View>
+          <View style={styles.borderLine}></View>
 
-
-        <Text>AdminSetting</Text>
+          <TouchableOpacity 
+            style={styles.logoutContainer}
+            onPress={handleLogout}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="log-out-outline" size={25} color="black" />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      
     </View>
   )
 }

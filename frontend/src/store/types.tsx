@@ -7,6 +7,7 @@ export type AuthState = {
   login: (email: string, password: string) => Promise<any>;
   checkAuth: () => Promise<User>;
   logout: () => void;
+  register: (data: any) => Promise<any>;
 };
 
 

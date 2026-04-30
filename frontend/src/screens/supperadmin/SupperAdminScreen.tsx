@@ -99,6 +99,9 @@ const SupperAdminScreen = () => {
               style={styles.bottomNavItem}
               onPress={() => {
                 switch (index) {
+                  case 0:
+                    navigation.replace("supperAdminHome");
+                    break;
                   case 1:
                     navigation.replace("supperchatroom");
                     break;

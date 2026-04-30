@@ -13,7 +13,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     nameTitle : {
-        fontSize: 16, fontWeight: "bold", marginBottom: 10,
+        fontSize: 16, fontWeight: "bold", marginBottom: 10, width: 150
     },
     addAndSettings : {
         display: "flex", flexDirection: "row", gap: 20,

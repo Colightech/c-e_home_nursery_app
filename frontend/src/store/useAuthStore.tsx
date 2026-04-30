@@ -32,6 +32,26 @@ const useAuthStore = create<AuthState>()(
       },
 
 
+      register: async (data) => {
+        set({ loading: true, error: null });
+
+        try {
+          const res = await axiosInstance.post("/auth/register", data);
+
+          set({ loading: false });
+          return res.data;
+
+        } catch (error) {
+          const message = axios.isAxiosError(error)
+            ? error.response?.data?.message || error.message
+            : "Something went wrong";
+
+          set({ error: message, loading: false });
+          return { error: true, message };
+        }
+      },
+
+
       checkAuth: async () => {
         try {
             const res = await axiosInstance.get("/auth/me");
