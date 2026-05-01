@@ -49,12 +49,13 @@ const getAdminStats = async (req, res) => {
 
 const getAllChildren = async (req, res) => {
   try {
-    const children = await childModel.find().select("-password"); // don’t return password
+    const children = await childModel.find().select("-password")
+    .populate("parentId", "firstName lastName email phone");
 
     res.status(200).json({
       success: true,
       count: children.length,
-      children,
+      data: children,
     });
   } catch (err) {
     res.status(500).json({ error: true, message: err.message });

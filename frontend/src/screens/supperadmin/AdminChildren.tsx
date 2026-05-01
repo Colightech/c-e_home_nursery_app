@@ -3,34 +3,86 @@
 
 
 
-import React from 'react'
-import { View, TextInput, Button, Text, TouchableOpacity, ImageBackground, 
-    Image,   KeyboardAvoidingView, ScrollView, Platform, } from "react-native";
+import React, { useEffect, useState } from 'react'
+import { View, Text, TouchableOpacity, Image,  ScrollView } from "react-native";
 
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation/types";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import styles from '../../style/supperadmin/adminChildrenStyle';
+import useAdminStore from '../../store/useAdminStore';
+import Avatar from '../../components/Avater';
+import ChildrenDetails from '../../components/ChildrenDetails';
+import { Child } from '../../store/types'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 
-
 const AdminChildren = () => {
+
+  const [storeChildren, setStoreChildren] = useState<Child | null>(null);
+  const [openDetails, setOpenDetails] = useState(false);
+
+  const fetchChildren = useAdminStore((state) => state.fetchChildren);
+  const childdata = useAdminStore((state) => state.childdata);
+
+  // console.log("storeChildren response", storeChildren);
+
+  useEffect(() => {
+    fetchChildren();
+  }, [])
 
   const navigation = useNavigation<NavigationProp>()
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View >
         <TouchableOpacity
           onPress={() => navigation.replace("supperadmin")}
         >
-          <Ionicons name="chevron-back" size={35} color="black" />
+          <Ionicons name="chevron-back" size={25} color="black" />
         </TouchableOpacity>
-        <Text>Admin Children</Text>
+        <Text style={styles.textTitle}>Children</Text>
+        <View style={styles.mapItemsContainer}>
+            {
+              childdata?.map((item, index) =>(
+                <View
+                  key={index}
+                >
+                  <TouchableOpacity 
+                    style={styles.mapItems}
+                    onPress={() => {
+                      setStoreChildren(item)
+                      setOpenDetails(true)
+                    }}
+                  >
+                    <View>
+                      <Avatar 
+                        imageUrl=''
+                        name={`${item.firstName} ${item.lastName}`}
+                      />
+                    </View>
+                    <View style={styles.nameContainer}>
+                      <Text>{item.firstName}</Text>
+                      <Text>{item.lastName}</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              ))
+            }
+        </View>
+        <View style={styles.openDetaile}>
+            {openDetails && storeChildren && (
+              <View>
+                 <ChildrenDetails
+                  storeChildren = {storeChildren}
+                  setStoreChildren = { setStoreChildren}
+                 />
+              </View>
+            )}
+        </View>
       </View>
-    </View>
+    </ScrollView>
   )
 }
 

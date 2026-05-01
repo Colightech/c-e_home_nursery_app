@@ -27,7 +27,6 @@ const SupperAdminScreen = () => {
     const loading = useAdminStore((state) => state.loading);
     const error = useAdminStore((state) => state.error);
 
-    console.log("stats response", stats);
 
     const navigation = useNavigation<NavigationProp>()
 

@@ -19,12 +19,23 @@ export type AdminStats = {
   revenue: number;
 };
 
+export type Child = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  address?: string;
+  homeLanguage?: string;
+  dateOfBirth?: string;
+};
+
 export type AdminState = {
   stats: AdminStats;
   loading: boolean;
   error: string | null;
+  childdata: Child[];
 
   fetchStats: () => Promise<void>;
+  fetchChildren: () => Promise<void>;
 };
 
 
