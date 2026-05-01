@@ -264,6 +264,7 @@ const loginUser = async (req, res) => {
 };
 
 
+
 const logoutUser = async (req, res) => {
 
   const user = req.user;
@@ -328,21 +329,6 @@ const getCurrentUser = async (req, res) => {
       error: true,
       message: "Invalid or expired token",
     });
-  }
-};
-
-
-const getAllChildren = async (req, res) => {
-  try {
-    const children = await childModel.find().select("-password"); // don’t return password
-
-    res.status(200).json({
-      success: true,
-      count: children.length,
-      children,
-    });
-  } catch (err) {
-    res.status(500).json({ error: true, message: err.message });
   }
 };
 
@@ -916,7 +902,6 @@ module.exports = {
     loginUser,
     logoutUser,
     getCurrentUser,
-    getAllChildren,
     updateUser,
     deleteUser,
     softDeleteUser,

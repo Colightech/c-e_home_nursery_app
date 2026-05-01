@@ -14,8 +14,8 @@ export type AuthState = {
 
 export type AdminStats = {
   users: number;
-  students: number;
-  teachers: number;
+  children: number;
+  caregiver: number;
   revenue: number;
 };
 

@@ -5,14 +5,32 @@ const styles = StyleSheet.create({
     container : {
         padding: 15, 
     },
+    backButton: {
+        backgroundColor: "#b6b3b3",
+        width: 40,
+        height: 40,
+        borderRadius: 50,
+    },
+    pickerStyle: {
+        fontSize: 18,
+    },
     userInputStyle : {
-        borderWidth: 0.2, backgroundColor: "#ddd", marginVertical: 3, borderRadius: 10, padding: 10
+        borderWidth: 0.2, 
+        backgroundColor: "#ddd", 
+        marginVertical: 3, 
+        borderRadius: 10, 
+        padding: 10, 
+        fontWeight: 600, 
+        fontSize: 18,
     },
     buttonStyle: {
         marginVertical: 20,
     },
     switchies: {
-        flexDirection: "row", justifyContent: "space-between", marginTop: 20, alignItems: "center"
+        flexDirection: "row", 
+        justifyContent: "space-between", 
+        marginTop: 20, 
+        alignItems: "center"
     }
 })
 

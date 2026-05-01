@@ -3,34 +3,45 @@ import axiosInstance from "../api/axiosInstance";
 import type { AdminState } from "./types"; 
 import axios from "axios";
 
+
+
 const useAdminStore = create<AdminState>()((set) => ({
   stats: {
     users: 0,
-    students: 0,
-    teachers: 0,
+    children: 0,
+    caregiver: 0,
     revenue: 0,
   },
 
   loading: false,
   error : null,
 
+
   fetchStats: async () => {
+    set({ loading: true, error: null });
+
     try {
-      set({ loading: true });
-
-      const res = await axiosInstance.get("/admin/stats");
-
+      const res = await axiosInstance.get("/dashboard/stats");
+       console.log("res response", res);
+      const data = res.data.data;
       set({
-        stats: res.data.data,
+        stats: {
+          users: data.users,
+          children: data.children,     // 👈 map correctly
+          caregiver: data.caregivers,   // 👈 map correctly
+          revenue: data.revenue,
+        },
         loading: false,
       });
     } catch (error) {
-        const message = axios.isAxiosError(error)
+      const message = axios.isAxiosError(error)
         ? error.response?.data?.message || error.message
-        : "ADMIN STATS ERROR" ;
-        set({ error: message, loading: false });
+        : "Failed to fetch stats";
+
+      set({ error: message, loading: false });
     }
   },
+
 }));
 
 export default useAdminStore;

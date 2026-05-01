@@ -27,6 +27,8 @@ const SupperAdminScreen = () => {
     const loading = useAdminStore((state) => state.loading);
     const error = useAdminStore((state) => state.error);
 
+    console.log("stats response", stats);
+
     const navigation = useNavigation<NavigationProp>()
 
   useEffect(() => {
@@ -84,8 +86,8 @@ const SupperAdminScreen = () => {
 
         <View style={styles.startCardContainer}>
           <View style={styles.startCard}><StatCard title="Users" value={stats.users}/></View>
-          <View style={styles.startCard}><StatCard title="Students" value={stats.students} /></View>
-          <View style={styles.startCard}><StatCard title="Teachers" value={stats.teachers} /></View>
+          <View style={styles.startCard}><StatCard title="Children" value={stats.children} /></View>
+          <View style={styles.startCard}><StatCard title="Caregivers" value={stats.caregiver} /></View>
           <View style={styles.startCard}><StatCard title="Revenue" value={stats.revenue} /></View>
         </View>
       </ScrollView>

@@ -3,7 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./utils/dbConnection");
 const cookieParser = require("cookie-parser");
-const authRoute = require("./routes/authRoute")
+const authRoute = require("./routes/authRoute");
+const dashboardRoute = require("./routes/dashboardRoute");
 
 
 
@@ -33,6 +34,7 @@ app.get("/", (req, res) => {
 
 
 app.use("/api/auth", authRoute);
+app.use("/api/dashboard", dashboardRoute);
 
 
 
