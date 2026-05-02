@@ -6,9 +6,10 @@ const styles = StyleSheet.create({
         padding: 15, 
     },
     backButton: {
-        backgroundColor: "#b6b3b3",
-        width: 40,
-        height: 40,
+        backgroundColor: "#aaa",
+        width: 30,
+        height: 30,
+        padding: 1,
         borderRadius: 50,
     },
     pickerStyle: {
@@ -21,7 +22,7 @@ const styles = StyleSheet.create({
         borderRadius: 10, 
         padding: 10, 
         fontWeight: 600, 
-        fontSize: 18,
+        fontSize: 15,
     },
     buttonStyle: {
         marginVertical: 20,

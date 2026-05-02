@@ -7,6 +7,17 @@ const styles = StyleSheet.create({
         padding: 10,
         position: "relative"
     },
+    backButton : {
+        backgroundColor: "#aaa",
+        width: 30,
+        borderRadius: 50,
+        padding: 1,
+    },
+    loadingText : {
+        fontSize: 30,
+        textAlign: "center",
+        marginTop: 350,
+    },
     textTitle: {
         fontSize: 25,
         fontWeight: 600,
@@ -40,7 +51,7 @@ const styles = StyleSheet.create({
         position: "absolute",
         right: 30,
         left: 30,
-        top: 80,
+        top: 50,
         bottom: 50
     }
 })

@@ -19,6 +19,7 @@ export type AdminStats = {
   revenue: number;
 };
 
+
 export type Child = {
   _id: string;
   firstName: string;
@@ -26,6 +27,53 @@ export type Child = {
   address?: string;
   homeLanguage?: string;
   dateOfBirth?: string;
+  pickupPassword?: string;
+
+  // 👇 Parent
+  parentId?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+  };
+
+  // 👇 Emergency Contacts
+  emergencyContacts?: {
+    name?: string;
+    phone?: string;
+    address?: string;
+    relationship?: string;
+  }[];
+
+  // 👇 Authorized Contacts
+  authorizedContacts?: {
+    name?: string;
+    address?: string;
+    relationship?: string;
+    hasLegalContactRight?: boolean;
+    details?: string;
+  }[];
+
+  // 👇 Medical Info
+  medicalInfo?: {
+    allergies?: {
+      hasAllergies?: boolean;
+      details?: string;
+    };
+    medicalConditions?: {
+      hasCondition?: boolean;
+      details?: string;
+    };
+    vaccinationsUpToDate?: boolean;
+    vaccinationDetails?: string;
+  };
+
+  // 👇 Doctor
+  doctor?: {
+    name?: string;
+    address?: string;
+    phone?: string;
+  };
 };
 
 export type AdminState = {

@@ -211,7 +211,7 @@ const AddUserScreen = () => {
           style={styles.backButton}
           onPress={() => navigation.replace("supperadmin")}
         >
-            <Ionicons name="chevron-back" size={35} color="#fff" />
+            <Ionicons name="chevron-back" size={25} color="#fff" />
         </TouchableOpacity>
         
         <Text style={{textAlign: "center", fontSize: 25, fontWeight: 600}}>User user</Text>
@@ -236,7 +236,7 @@ const AddUserScreen = () => {
           <Picker.Item style={styles.pickerStyle} label="Male" value="male" />
           <Picker.Item style={styles.pickerStyle} label="Female" value="female" />
         </Picker>
-        <TextInput  placeholder="Date of birth" value={dateOfBirth} onChangeText={setDateOfBirth} />
+        <AppInput   placeholder="Date of birth" value={dateOfBirth} onChangeText={setDateOfBirth} />
 
         {/* ================= CHILD SECTION ================= */}
         {role === "parent" && (
@@ -252,8 +252,8 @@ const AddUserScreen = () => {
               <Picker.Item style={styles.pickerStyle} label="Spanish" value="Spanish" />
               <Picker.Item style={styles.pickerStyle} label="Arabic" value="Arabic" />
             </Picker>
-            <TextInput  placeholder="Pickup Password" value={pickupPassword} onChangeText={setPickupPassword} />
-            <TextInput  placeholder="Child Date of birth" value={childDob} onChangeText={setChildDob} />
+            <AppInput   placeholder="Pickup Password" value={pickupPassword} onChangeText={setPickupPassword} />
+            <AppInput  placeholder="Child Date of birth" value={childDob} onChangeText={setChildDob} />
 
             {/* Emergency Contact */}
             <Text style={{ marginTop: 10 }}>Emergency Contact</Text>
