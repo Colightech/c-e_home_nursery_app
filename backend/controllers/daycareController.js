@@ -14,7 +14,8 @@ const createDaycare = async (req, res) => {
 
     if (req.user.role !== "super-admin" && req.user.role !== "admin") {
         return res.status(403).json({
-            message: "Not authorized to create daycare",
+          error: true,
+          message: "Not authorized to create daycare",
         });
     }
 
@@ -29,22 +30,26 @@ const createDaycare = async (req, res) => {
 
     if (!ownerId) {
         return res.status(400).json({
-            message: "Owner (admin user) is required",
+          error: true,
+          message: "Owner (admin user) is required",
         });
     }
 
+
     const ownerUser = await usersModel.findById(ownerId);
-    if (!ownerUser || ownerUser.role !== "admin") {
-        return res.status(400).json({
-            message: "Owner must be a valid admin user",
-        });
+    const allowedRoles = ["super-admin", "admin"];
+    if (!ownerUser || !allowedRoles.includes(ownerUser.role)) {
+      return res.status(400).json({
+        message: "Owner must be a valid admin user",
+      });
     }
 
     const existing = await daycareModel.findOne({ owner: ownerId });
 
     if (existing) {
         return res.status(400).json({
-            message: "This admin already has a daycare",
+          error: true,
+          message: "This admin already has a daycare",
         });
     }
 
@@ -74,6 +79,7 @@ const createDaycare = async (req, res) => {
     });
 
     res.status(201).json({
+      success: true,
       message: "Daycare created successfully",
       data: daycare,
     });
@@ -81,8 +87,6 @@ const createDaycare = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
-
 
 
 
@@ -138,6 +142,22 @@ const updateDaycare = async (req, res) => {
       return res.status(404).json({ message: "Daycare not found" });
     }
 
+    const device = getDevice(req);
+
+    await logAudit({
+      action: "UPDATE_DAYCARE",
+      entityId: daycare._id,
+      entityName: `${daycare.name}`, 
+      status: "success",
+      metadata: {
+        time: new Date(),
+        device: device.platform,
+        deviceId: device.deviceId
+      },
+      source: "daycare",
+      req,
+    });
+
     res.json({
       message: "Daycare updated",
       data: daycare,
@@ -161,6 +181,22 @@ const deleteDaycare = async (req, res) => {
     daycare.deletedAt = new Date();
     daycare.isActive = false;
     await daycare.save();
+
+    const device = getDevice(req);
+
+    await logAudit({
+      action: "SOFT_DELETE_DAYCARE",
+      entityId: daycare._id,
+      entityName: `${daycare.name}`, 
+      status: "success",
+      metadata: {
+        time: new Date(),
+        device: device.platform,
+        deviceId: device.deviceId
+      },
+      source: "daycare",
+      req,
+    });
 
     res.json({ message: "Daycare deleted (soft delete)" });
   } catch (err) {

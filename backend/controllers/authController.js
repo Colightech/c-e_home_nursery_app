@@ -13,6 +13,7 @@ const sendVerificationEmail = require("../lib/sendVerificationEmail");
 const validateChildBusinessRules = require("../lib/validateChildBusinessRules");
 const rolePermissions = require("../lib/rolePermissions");
 const getDevice = require("../lib/getDevice");
+const daycareModel = require("../model/daycareModel");
 
 
 
@@ -76,19 +77,47 @@ const registerUser = async (req, res) => {
       });
     }
 
-  
-    let user; 
+
+
+    let user;
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-      // validate first
+      let assignedDaycareId = daycareId;
       if (role === "parent") {
+      
+        if (req.user.role === "admin") {
+          const adminDaycare = await daycareModel.findOne({ owner: req.user.id });
+
+          if (!adminDaycare) {
+            throw new Error("Admin has no daycare");
+          }
+          assignedDaycareId = adminDaycare._id;
+        }
+
+        // Must exist
+        if (!assignedDaycareId) {
+          throw new Error("Parent must belong to a daycare");
+        }
+
+        // Super-admin validation
+        if (req.user.role === "super-admin") {
+          const exists = await daycareModel.findById(assignedDaycareId);
+
+          if (!exists) {
+            throw new Error("Selected daycare does not exist");
+          }
+        }
+
+        // Child validation
         if (!child || !child.firstName || !child.lastName) {
           throw new Error("Child information is required for parent registration");
         }
+
         validateChildBusinessRules(child);
       }
-      // create user
+
+      // ================= CREATE USER =================
       const createdUser = await usersModel.create([{
         firstName,
         lastName,
@@ -100,19 +129,21 @@ const registerUser = async (req, res) => {
         role,
         dateOfBirth,
         gender,
-        daycareId,
+        daycareId: assignedDaycareId, 
         permissions: rolePermissions(role)
       }], { session });
 
-      user = createdUser[0]; 
+      user = createdUser[0];
 
-      // create child
+      // ================= CREATE CHILD =================
       if (role === "parent") {
         await childModel.create([{
           ...child,
-          parentId: user._id
+          parentId: user._id,
+          daycareId: assignedDaycareId, 
         }], { session });
       }
+
       await session.commitTransaction();
       session.endSession();
     } catch (error) {

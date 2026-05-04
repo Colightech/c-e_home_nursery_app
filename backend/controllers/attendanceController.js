@@ -1,7 +1,6 @@
 const attendanceMdel = require("../model/attendanceMdel");
-
-
-
+const logAudit = require("../utils/auditLogger");
+const getDevice = require("../lib/getDevice");
 
 
 
@@ -39,6 +38,22 @@ const checkIn = async (req, res) => {
       recordedBy: req.user.id,
     });
 
+    const device = getDevice(req);
+
+    await logAudit({
+      action: "ATTENDANCE_CHECK_IN",
+      entityId: attendance._id,
+      entityName: "Attendance", 
+      status: "success",
+      metadata: {
+        time: new Date(),
+        device: device.platform,
+        deviceId: device.deviceId
+      },
+      source: "Attendance_check_in",
+      req,
+    });
+
     res.status(201).json(attendance);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -46,14 +61,16 @@ const checkIn = async (req, res) => {
 };
 
 
-
-
-
-
-
 const checkOut = async (req, res) => {
   try {
     const { childId, checkedOutBy } = req.body;
+
+    if (!childId || !checkedOutBy) {
+      return res.status(403).json({
+        error: true,
+        message: "childId and checkedOutBy are required"
+      })
+    }
 
     const today = new Date().toISOString().split("T")[0];
 
@@ -72,15 +89,26 @@ const checkOut = async (req, res) => {
 
     await attendance.save();
 
+    const device = getDevice(req);
+    await logAudit({
+      action: "ATTENDANCE_CHECK_OUT",
+      entityId: attendance._id,
+      entityName: "Attendance", 
+      status: "success",
+      metadata: {
+        time: new Date(),
+        device: device.platform,
+        deviceId: device.deviceId
+      },
+      source: "Attendance_check_out",
+      req,
+    });
+
     res.json(attendance);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
-
-
-
-
 
 
 const getAttendanceByDate = async (req, res) => {
@@ -98,10 +126,6 @@ const getAttendanceByDate = async (req, res) => {
 };
 
 
-
-
-
-
 const getChildAttendance = async (req, res) => {
   try {
     const { childId } = req.params;
@@ -116,16 +140,28 @@ const getChildAttendance = async (req, res) => {
 
 
 
-
-
-
-
 const updateAttendance = async (req, res) => {
   try {
     const { id } = req.params;
 
     const updated = await attendanceMdel.findByIdAndUpdate(id, req.body, {
       new: true,
+    });
+
+
+    const device = getDevice(req);
+    await logAudit({
+      action: "UPDATE_ATTENDANCE",
+      entityId: updated._id,
+      entityName: "Attendance", 
+      status: "success",
+      metadata: {
+        time: new Date(),
+        device: device.platform,
+        deviceId: device.deviceId
+      },
+      source: "Update_Attendance",
+      req,
     });
 
     res.json(updated);
@@ -136,14 +172,26 @@ const updateAttendance = async (req, res) => {
 
 
 
-
-
-
 const deleteAttendance = async (req, res) => {
   try {
     const { id } = req.params;
 
     await attendanceMdel.findByIdAndDelete(id);
+
+    const device = getDevice(req);
+    await logAudit({
+      action: "DELETE_ATTENDANCE",
+      entityId: id,
+      entityName: "Attendance", 
+      status: "success",
+      metadata: {
+        time: new Date(),
+        device: device.platform,
+        deviceId: device.deviceId
+      },
+      source: "Delete_Attendance",
+      req,
+    });
 
     res.json({ message: "Deleted successfully" });
   } catch (err) {

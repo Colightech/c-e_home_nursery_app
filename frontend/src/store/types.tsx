@@ -28,6 +28,7 @@ export type Child = {
   homeLanguage?: string;
   dateOfBirth?: string;
   pickupPassword?: string;
+  daycareId?: string;
 
   // 👇 Parent
   parentId?: {
@@ -81,9 +82,11 @@ export type AdminState = {
   loading: boolean;
   error: string | null;
   childdata: Child[];
+  daycare: Child[];
 
   fetchStats: () => Promise<void>;
   fetchChildren: () => Promise<void>;
+  fetchDaycare: () => Promise<void>;
 };
 
 
@@ -93,4 +96,16 @@ export type User = {
   email: string;
   role: "super-admin" | "admin" | "caregiver" | "parent";
   profile?: string;
+};
+
+
+export type AttendanceState = {
+  attendance: any[];
+  loading: boolean;
+  error: string | null;
+  success: string | null;
+
+  checkIn: (data: any) => Promise<void>;
+  checkOut: (data: any) => Promise<void>;
+  fetchByDate: (date: string) => Promise<void>;
 };

@@ -17,6 +17,12 @@ const auditLogSchema = new mongoose.Schema(
         "RE_ACTIVATE",
         "RESET_PASSWORD",
         "CREATE_DAYCARE",
+        "UPDATE_DAYCARE",
+        "SOFT_DELETE_DAYCARE",
+        "ATTENDANCE_CHECK_IN",
+        "ATTENDANCE_CHECK_OUT",
+        "UPDATE_ATTENDANCE",
+        "DELETE_ATTENDANCE",
       ],
     },
 

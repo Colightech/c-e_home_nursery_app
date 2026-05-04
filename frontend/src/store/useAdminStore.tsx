@@ -13,6 +13,7 @@ const useAdminStore = create<AdminState>()((set) => ({
     revenue: 0,
   },
   childdata: [],
+  daycare: [],
   loading: false,
   error : null,
 
@@ -50,6 +51,24 @@ const useAdminStore = create<AdminState>()((set) => ({
       const res = await axiosInstance.get("/dashboard/children");
 
       set({ childdata: res.data.data, loading: false });
+
+    } catch (error) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message || error.message
+        : "Failed to fetch stats";
+
+      set({ error: message, loading: false });
+    }
+  },
+
+
+  fetchDaycare: async () => {
+    set({ loading: true, error: null });
+
+    try {
+      const res = await axiosInstance.get("/daycare");
+
+      set({ daycare: res.data.data, loading: false });
 
     } catch (error) {
       const message = axios.isAxiosError(error)

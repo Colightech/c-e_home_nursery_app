@@ -17,6 +17,7 @@ import type { RootStackParamList } from "../../navigation/types";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import styles from "../../style/auth/addUserStyle";
 import AppInput from "../../components/AppInput"
+import useAdminStore from "../../store/useAdminStore";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -24,6 +25,9 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const AddUserScreen = () => {
 
     const navigation = useNavigation<NavigationProp>();
+
+    const fetchDaycare = useAdminStore((s) => s.fetchDaycare);
+    const daycare = useAdminStore((s) => s.daycare);
 
     const register = useAuthStore((s) => s.register);
     const loading = useAuthStore((s) => s.loading);
@@ -38,6 +42,7 @@ const AddUserScreen = () => {
     const [password, setPassword] = useState("");
     const [address, setAddress] = useState("");
     const [phone, setPhone] = useState("");
+    const [daycareId, setDaycareId] = useState("");
     const [gender, setGender] = useState("male");
     const [dateOfBirth, setDateOfBirth] = useState("");
 
@@ -86,6 +91,10 @@ const AddUserScreen = () => {
       }
     }, [success, error]);
 
+    useEffect(() => {
+      fetchDaycare();
+    }, [])
+
     // =========== CLEAR FORM FIELDS ============
     const resetForm = () => {
       setRole("parent")
@@ -95,6 +104,7 @@ const AddUserScreen = () => {
       setPassword("");
       setAddress("");
       setPhone("");
+      setDaycareId("");
       setGender("male");
       setDateOfBirth("");
 
@@ -231,6 +241,16 @@ const AddUserScreen = () => {
         <AppInput  placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
         <AppInput  placeholder="Address" value={address} onChangeText={setAddress} />
         <AppInput  placeholder="Phone" value={phone} onChangeText={setPhone} />
+        <Text style={{ marginTop: 10 }}>Select Daycare</Text>
+        <Picker
+          style={styles.userInputStyle}
+          selectedValue={daycareId}
+          onValueChange={(value) => setDaycareId(value)}
+        >
+          {daycare?.map((item: any) => (
+            <Picker.Item key={item._id} label={item.name} value={item._id}/>
+          ))}
+        </Picker>
         <Text style={{marginTop: 10}}>Select Gender</Text>
         <Picker style={styles.userInputStyle} selectedValue={gender} onValueChange={setGender}>
           <Picker.Item style={styles.pickerStyle} label="Male" value="male" />
