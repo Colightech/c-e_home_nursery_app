@@ -21,7 +21,11 @@ const useAuthStore = create<AuthState>()(
         set({ loading: true, error: null });
         try {
           const res = await axiosInstance.post("/auth/login", { email, password });
-          set({ user: res.data, loading: false });
+          set({ 
+            user: res.data, 
+            loading: false,
+            success: "Login successfully",
+          });
           return res.data;
         } catch (error) {
           const message = axios.isAxiosError(error)

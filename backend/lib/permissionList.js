@@ -10,7 +10,17 @@ const basePermissions = {
     "create_activity",
     "view_activity",
     "send_message",
-    "view_message"
+    "view_message",
+
+    "check_in",
+    "check_out",
+    "view_attendance",
+    "view_attendance",
+    "update_attendance",
+    "delete_attendance",
+    "create_daycare",
+    "view_daycare",
+    "update_daycare",
   ],
 
   caregiver: [
@@ -48,6 +58,17 @@ const superAdminExtras = [
     "update_user",
     "update_child",
     "update_activity",
+
+    "check_in",
+    "check_out",
+    "view_attendance",
+    "view_attendance",
+    "update_attendance",
+    "delete_attendance",
+    "create_daycare",
+    "view_daycare",
+    "update_daycare",
+    "delete_daycare",
 ];
 
 

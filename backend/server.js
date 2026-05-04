@@ -5,6 +5,8 @@ const connectDB = require("./utils/dbConnection");
 const cookieParser = require("cookie-parser");
 const authRoute = require("./routes/authRoute");
 const dashboardRoute = require("./routes/dashboardRoute");
+const attendanceRoute = require("./routes/attendanceRoute");
+const daycareRoute = require("./routes/daycareRoute");
 
 
 
@@ -35,6 +37,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoute);
 app.use("/api/dashboard", dashboardRoute);
+app.use("/api/attendance", attendanceRoute);
+app.use("/api/daycare", daycareRoute);
 
 
 

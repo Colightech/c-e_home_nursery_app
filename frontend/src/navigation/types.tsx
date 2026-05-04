@@ -11,7 +11,7 @@ export type RootStackParamList = {
   adduser: undefined;
   supperchatroom: undefined;
   adminchildren: undefined;
-  supperlearning: undefined;
+  supperattendance: undefined;
   supperAdminHome: undefined;
 };
 

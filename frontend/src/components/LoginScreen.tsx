@@ -36,6 +36,17 @@ const LoginScreen = () => {
   const user = useAuthStore((state) => state.user);
   const loading = useAuthStore((state) => state.loading);
   const error = useAuthStore((state) => state.error);
+  const success = useAuthStore((state) => state.success);
+
+
+  useEffect(() => {
+    if (success || error) {
+      const timer = setTimeout(() => {
+        useAuthStore.setState({ success: null, error: null });
+      }, 9000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, error]);
 
 
   useEffect(() => {

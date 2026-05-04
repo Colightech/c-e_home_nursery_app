@@ -7,7 +7,7 @@ import SupperAdminSetting from "./SupperAdminSetting";
 import AddUserScreen from "./AddUserScreen";
 import ChatRoom from "./ChatRoom";
 import AdminChildren from "./AdminChildren";
-import AdminLearningScreen from "./AdminLearningScreen";
+import SupperAdminAttendance from "./SupperAdminAttendance";
 
 const Stack = createNativeStackNavigator();
 
@@ -19,7 +19,7 @@ const SupperAdminStack = () => {
       <Stack.Screen name="adduser" component={AddUserScreen} options={{ headerShown: false }} />
       <Stack.Screen name="supperchatroom" component={ChatRoom} options={{ headerShown: false }} />
       <Stack.Screen name="adminchildren" component={AdminChildren} options={{ headerShown: false }} />
-      <Stack.Screen name="supperlearning" component={AdminLearningScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="supperattendance" component={SupperAdminAttendance} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };

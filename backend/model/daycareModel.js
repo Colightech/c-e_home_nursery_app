@@ -25,10 +25,25 @@ const daycareSchema = new mongoose.Schema(
       ref: "User", // admin
     },
 
+    capacity: {
+      type: Number,
+      default: 0,
+    },
+
     isActive: {
       type: Boolean,
       default: true,
-    }
+    },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+
+    deletedBy: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

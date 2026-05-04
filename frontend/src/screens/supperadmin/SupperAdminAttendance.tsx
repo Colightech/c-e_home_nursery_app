@@ -13,7 +13,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 
 
-const AdminLearningScreen = () => {
+const SupperAdminAttendance = () => {
 
   const navigation = useNavigation<NavigationProp>()
   return (
@@ -24,13 +24,13 @@ const AdminLearningScreen = () => {
         >
           <Ionicons name="chevron-back" size={35} color="black" />
         </TouchableOpacity>
-        <Text>Learning Screen</Text>
+        <Text>Attendance Screen</Text>
       </View>
     </View>
   )
 }
 
-export default AdminLearningScreen;
+export default SupperAdminAttendance;
 
 
 

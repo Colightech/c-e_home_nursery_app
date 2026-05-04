@@ -15,7 +15,7 @@ const bottomItems = [
   {id: 1, label: "Home", icon: (<Ionicons name="home-outline" size={25} color="black" />) },
   {id: 2, label: "Chat", icon: (<Ionicons name="chatbubble-outline" size={25} color="black" />) },
   {id: 3, label: "Children", icon: (<Ionicons name="people-outline" size={25} color="black" />) },
-  {id: 4, label: "Learning", icon: (<Ionicons name="school-outline" size={25} color="black" />) }
+  {id: 4, label: "Attendance", icon: (<Ionicons name="school-outline" size={25} color="black" />) }
 ]
 
 
@@ -110,7 +110,7 @@ const SupperAdminScreen = () => {
                     navigation.replace("adminchildren");
                     break;
                   case 3:
-                    navigation.replace("supperlearning");
+                    navigation.replace("supperattendance");
                     break;
                 }
               }}
