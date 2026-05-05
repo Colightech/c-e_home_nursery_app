@@ -16,9 +16,10 @@ import styles from '../../style/supperadmin/attendanceStyle';
 import useAttendanceStore from "../../store/useAttendanceStore";
 import useAdminStore from "../../store/useAdminStore";
 import Avatar from "../../components/Avater";
+import getFormattedDateTime from "../../utils/getFormattedDateTime";
+
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
 
 
 const SupperAdminAttendance = () => {
@@ -32,6 +33,8 @@ const SupperAdminAttendance = () => {
   const [personName, setPersonName] = React.useState("");
   const [relationship, setRelationship] = React.useState("");
 
+   const [time, setTime] = React.useState(getFormattedDateTime());
+
 
   const { attendance, fetchByDate, checkIn, checkOut, loading } = useAttendanceStore();
    const fetchChildren = useAdminStore((state) => state.fetchChildren);
@@ -43,8 +46,39 @@ const SupperAdminAttendance = () => {
     fetchChildren();
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(getFormattedDateTime());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const getChildAttendance = (childId: string) => {
     return attendance.find((a) => a.childId?._id === childId);
+  };
+
+
+  const getStatusUI = (record: any) => {
+    if (!record) {
+      return {
+        label: "Absent",
+        color: "#555",
+        icon: "close-circle-outline",
+      };
+    } else if (record.status === "late") {
+      return {
+        label: "Late",
+        color: "#FF3B30",
+        icon: "alert-circle-outline",
+      };
+    } else {
+      return {
+        label: "Present",
+        color: "#34C759",
+        icon: "checkmark-circle-outline",
+      };
+    }
   };
 
 
@@ -54,34 +88,60 @@ const SupperAdminAttendance = () => {
       <View >
         <TouchableOpacity
           onPress={() => navigation.replace("supperadmin")}
+          style={styles.backIcon}
         >
-          <Ionicons name="chevron-back" size={35} color="black" />
+          <Ionicons name="chevron-back" size={25} color="#fff" />
         </TouchableOpacity>
       </View>
-       <ScrollView style={styles.container}>
-        <Text style={styles.title}>Today's Attendance</Text>
+       <ScrollView>
+        <Text style={styles.title}>Today's </Text>
+        <Text style={styles.liveTime}>{time} Attendance</Text>
 
-        {children?.map((child) => {
-          
-          const record = getChildAttendance(child._id);
       
+        {children?.map((child) => {
+
+          const record = getChildAttendance(child._id);
+
+          const status = getStatusUI(record); 
+
           return (
             <View key={child._id} style={styles.card}>
+
               {/* LEFT */}
               <View style={styles.left}>
                 <Avatar name={`${child.firstName} ${child.lastName}`} />
                 <Text>{child.firstName} {child.lastName}</Text>
               </View>
 
-              {/* MIDDLE */}
+              {/* MIDDLE (UPGRADED) */}
               <View style={styles.middle}>
-                <Text>Status: {record?.status || "Absent"}</Text>
-                <Text>In: {record?.timeIn ? new Date(record.timeIn).toLocaleTimeString() : "--"}</Text>
-                <Text>Out: {record?.timeOut ? new Date(record.timeOut).toLocaleTimeString() : "--"}</Text>
+
+                {/* STATUS WITH ICON */}
+                <View style={styles.statusRow}>
+                  <Ionicons name={status.icon} size={20} color={status.color} />
+                  <Text style={[styles.statusText, { color: status.color }]}>
+                    {status.label}
+                  </Text>
+                </View>
+
+                {/* TIME */}
+                <Text style={styles.timeText}>
+                  Time in: {record?.timeIn
+                    ? new Date(record.timeIn).toLocaleTimeString()
+                    : "--"}
+                </Text>
+
+                <Text style={styles.timeText}>
+                  Time out: {record?.timeOut
+                    ? new Date(record.timeOut).toLocaleTimeString()
+                    : "--"}
+                </Text>
+
               </View>
 
-              {/* RIGHT */}
+              {/* RIGHT (UNCHANGED LOGIC) */}
               <View style={styles.right}>
+
                 {!record && (
                   <TouchableOpacity
                     style={styles.checkInBtn}
@@ -92,7 +152,7 @@ const SupperAdminAttendance = () => {
                     }}
                   >
                     <Text style={styles.checkText}>Check In</Text>
-                  </TouchableOpacity>                
+                  </TouchableOpacity>
                 )}
 
                 {record && !record.timeOut && (
@@ -107,10 +167,17 @@ const SupperAdminAttendance = () => {
                     <Text style={styles.checkText}>Check Out</Text>
                   </TouchableOpacity>
                 )}
+
+                {record?.timeOut && (
+                  <Text style={{ color: "green", fontSize: 12 }}>
+                    Completed
+                  </Text>
+                )}
               </View>
             </View>
-          );
+            );
         })}
+
 
         {loading && <Text>Processing...</Text>}
       </ScrollView>

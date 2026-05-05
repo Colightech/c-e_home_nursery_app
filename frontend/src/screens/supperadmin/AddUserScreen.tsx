@@ -29,6 +29,9 @@ const AddUserScreen = () => {
     const fetchDaycare = useAdminStore((s) => s.fetchDaycare);
     const daycare = useAdminStore((s) => s.daycare);
 
+    // console.log("daycare response", daycare);
+   
+
     const register = useAuthStore((s) => s.register);
     const loading = useAuthStore((s) => s.loading);
     const error = useAuthStore((s) => s.error);
@@ -45,6 +48,7 @@ const AddUserScreen = () => {
     const [daycareId, setDaycareId] = useState("");
     const [gender, setGender] = useState("male");
     const [dateOfBirth, setDateOfBirth] = useState("");
+
 
     // ================= CHILD BASIC =================
     const [childFirstName, setChildFirstName] = useState("");
@@ -94,6 +98,12 @@ const AddUserScreen = () => {
     useEffect(() => {
       fetchDaycare();
     }, [])
+
+    useEffect(() => {
+      if (daycare?.length > 0 && !daycareId) {
+        setDaycareId(daycare[0]._id);
+      }
+    }, [daycare]);
 
     // =========== CLEAR FORM FIELDS ============
     const resetForm = () => {
@@ -242,11 +252,7 @@ const AddUserScreen = () => {
         <AppInput  placeholder="Address" value={address} onChangeText={setAddress} />
         <AppInput  placeholder="Phone" value={phone} onChangeText={setPhone} />
         <Text style={{ marginTop: 10 }}>Select Daycare</Text>
-        <Picker
-          style={styles.userInputStyle}
-          selectedValue={daycareId}
-          onValueChange={(value) => setDaycareId(value)}
-        >
+        <Picker style={styles.userInputStyle} selectedValue={daycareId} onValueChange={setDaycareId}>
           {daycare?.map((item: any) => (
             <Picker.Item key={item._id} label={item.name} value={item._id}/>
           ))}
