@@ -18,6 +18,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { redirectByRole } from "../utils/redirectByRole"
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -133,7 +134,15 @@ const LoginScreen = () => {
                 style={styles.showPass}
                 onPress={() => setShowPassword(!showPassword)}
               >
-                <Text>{showPassword ? "hide" : "show"}</Text>
+                <Text>
+                  {
+                    showPassword ? (
+                      <Ionicons name="eye-off-outline" size={25} color="black" />
+                    ) : (
+                       <Ionicons name="eye-outline" size={25} color="black" />
+                    )
+                  }
+                </Text>
               </TouchableOpacity>
             </View>
 

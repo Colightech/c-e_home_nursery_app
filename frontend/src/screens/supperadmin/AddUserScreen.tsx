@@ -37,6 +37,8 @@ const AddUserScreen = () => {
     const error = useAuthStore((s) => s.error);
     const success = useAuthStore((s) => s.success);
 
+    const [showPassword, setShowPassword] = useState(false);
+
     // ================= USER =================
     const [role, setRole] = useState("parent");
     const [firstName, setFirstName] = useState("");
@@ -165,6 +167,7 @@ const AddUserScreen = () => {
         password,
         address,
         phone,
+        daycareId,
         gender,
         dateOfBirth,
       };
@@ -248,7 +251,28 @@ const AddUserScreen = () => {
         <AppInput  placeholder="First Name" value={firstName} onChangeText={setFirstName} />
         <AppInput  placeholder="Last Name" value={lastName} onChangeText={setLastName} />
         <AppInput  placeholder="Email" value={email} onChangeText={setEmail} />
-        <AppInput  placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
+        <View style={styles.passwordContainer}>
+          <AppInput
+            placeholder="Password" 
+            value={password} 
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity
+            style={styles.showPass}
+            onPress={() => setShowPassword(!showPassword)}
+          >
+            <Text>
+              {
+                showPassword ? (
+                  <Ionicons name="eye-off-outline" size={25} color="black" />
+                ) : (
+                    <Ionicons name="eye-outline" size={25} color="black" />
+                )
+              }
+            </Text>
+          </TouchableOpacity>
+        </View>
         <AppInput  placeholder="Address" value={address} onChangeText={setAddress} />
         <AppInput  placeholder="Phone" value={phone} onChangeText={setPhone} />
         <Text style={{ marginTop: 10 }}>Select Daycare</Text>

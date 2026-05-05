@@ -15,6 +15,14 @@ const styles = StyleSheet.create({
     pickerStyle: {
         fontSize: 18,
     },
+    passwordContainer : {
+        position: "relative",
+    },
+    showPass : {
+        position: "absolute",
+        right: 10,
+        top: 10
+    },
     userInputStyle : {
         borderWidth: 0.2, 
         backgroundColor: "#ddd", 

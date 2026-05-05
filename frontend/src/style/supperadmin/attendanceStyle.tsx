@@ -91,6 +91,9 @@ const styles = StyleSheet.create({
         padding: 15, 
         fontWeight: 600, 
     },
+    alert: { 
+        color: "red", fontSize: 13, textAlign: "center"
+    },
     confirmBtn: {
         backgroundColor: "blue",
         padding: 10,

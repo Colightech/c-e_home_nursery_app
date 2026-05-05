@@ -32,6 +32,7 @@ const SupperAdminAttendance = () => {
 
   const [personName, setPersonName] = React.useState("");
   const [relationship, setRelationship] = React.useState("");
+  const [enterName, setEnterName] = React.useState("");
 
    const [time, setTime] = React.useState(getFormattedDateTime());
 
@@ -46,13 +47,24 @@ const SupperAdminAttendance = () => {
     fetchChildren();
   }, []);
 
+
   useEffect(() => {
     const interval = setInterval(() => {
       setTime(getFormattedDateTime());
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
+
+
+  useEffect(() => {
+    if (enterName) {
+      const timer = setTimeout(() => {
+        setEnterName("")
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [enterName]);
+
 
   const getChildAttendance = (childId: string) => {
     return attendance.find((a) => a.childId?._id === childId);
@@ -140,40 +152,48 @@ const SupperAdminAttendance = () => {
               </View>
 
               {/* RIGHT (UNCHANGED LOGIC) */}
-              <View style={styles.right}>
+              {
+                loading ? (
+                  <Text>Loading...</Text>
+                ) : (
+                  <View style={styles.right}>
 
-                {!record && (
-                  <TouchableOpacity
-                    style={styles.checkInBtn}
-                    onPress={() => {
-                      setSelectedChild(child);
-                      setActionType("checkin");
-                      setModalVisible(true);
-                    }}
-                  >
-                    <Text style={styles.checkText}>Check In</Text>
-                  </TouchableOpacity>
-                )}
+                    {!record && (
+                      <TouchableOpacity
+                        style={styles.checkInBtn}
+                        onPress={() => {
+                          setSelectedChild(child);
+                          setActionType("checkin");
+                          setModalVisible(true);
+                        }}
+                      >
+                        <Text style={styles.checkText}>Check In</Text>
+                      </TouchableOpacity>
+                    )}
 
-                {record && !record.timeOut && (
-                  <TouchableOpacity
-                    style={styles.checkOutBtn}
-                    onPress={() => {
-                      setSelectedChild(child);
-                      setActionType("checkout");
-                      setModalVisible(true);
-                    }}
-                  >
-                    <Text style={styles.checkText}>Check Out</Text>
-                  </TouchableOpacity>
-                )}
+                    {record && !record.timeOut && (
+                      <TouchableOpacity
+                        style={styles.checkOutBtn}
+                        onPress={() => {
+                          setSelectedChild(child);
+                          setActionType("checkout");
+                          setModalVisible(true);
+                        }}
+                      >
+                        <Text style={styles.checkText}>Check Out</Text>
+                      </TouchableOpacity>
+                    )}
 
-                {record?.timeOut && (
-                  <Text style={{ color: "green", fontSize: 12 }}>
-                    Completed
-                  </Text>
-                )}
-              </View>
+                    {record?.timeOut && (
+                      <Text style={{ color: "green", fontSize: 12 }}>
+                        Completed
+                      </Text>
+                    )}
+                  </View>
+                )
+              }
+             
+
             </View>
             );
         })}
@@ -210,12 +230,17 @@ const SupperAdminAttendance = () => {
               onChangeText={setRelationship}
               style={styles.input}
             />
-
+            {enterName ? (
+              <Text style={styles.alert}>
+                {enterName}
+              </Text>
+            ) : null}
             <TouchableOpacity
               style={styles.confirmBtn}
               onPress={async () => {
-                if (!personName || !relationship) return;
-
+                if (!personName || !relationship){
+                  return setEnterName("please enter your name and relationship with child");
+                }
                 if (actionType === "checkin") {
                   await checkIn({
                     childId: selectedChild._id,
