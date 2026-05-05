@@ -91,7 +91,7 @@ const SupperAdminAttendance = () => {
                       setModalVisible(true);
                     }}
                   >
-                    <Text>Check In</Text>
+                    <Text style={styles.checkText}>Check In</Text>
                   </TouchableOpacity>                
                 )}
 
@@ -104,7 +104,7 @@ const SupperAdminAttendance = () => {
                       setModalVisible(true);
                     }}
                   >
-                    <Text style={styles.btnText}>Check Out</Text>
+                    <Text style={styles.checkText}>Check Out</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -118,15 +118,14 @@ const SupperAdminAttendance = () => {
       {modalVisible && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <View >
+            <View style={styles.cancelNcheck}>
               <Text style={styles.modalTitle}>
-                {actionType === "checkin" ? "Check In" : "Check Out"}
+                {actionType === "checkin" ? "Enter Check In details" : "Enter Check Out details"}
               </Text>
               <TouchableOpacity 
-                style={styles.cancelBtn}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={styles.cancelText}>Cancel</Text>
+                <Ionicons name="close-outline" size={25} color="black" />
               </TouchableOpacity>
             </View>
             
@@ -139,7 +138,7 @@ const SupperAdminAttendance = () => {
             />
 
             <TextInput
-              placeholder="Relationship (Father, Mother...)"
+              placeholder="Relationship"
               value={relationship}
               onChangeText={setRelationship}
               style={styles.input}
@@ -176,7 +175,7 @@ const SupperAdminAttendance = () => {
                 setSelectedChild(null);
               }}
             >
-              <Text style={styles.confirmBtnText}>Confirm</Text>
+               <Text style={styles.confirmBtnText}>{loading ? "Confirming..." : "Confirm"}</Text>
             </TouchableOpacity>
 
             

@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
         padding: 8,
         borderRadius: 5,
     },
-    btnText: {
+    checkText: {
         color: "#fff",
         fontWeight: 600
     },
@@ -59,17 +59,14 @@ const styles = StyleSheet.create({
     modalBox: {
        
     },
+    cancelNcheck: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 5,
+    },
     modalTitle: {
 
-    },
-    cancelBtn: {
-        backgroundColor: "black",
-        borderRadius: 5,
-        width: 60,
-        padding: 5,
-    },
-    cancelText: {
-        color: "#fff"
     },
     input: {
         borderWidth: 0.2, 
@@ -80,10 +77,14 @@ const styles = StyleSheet.create({
         fontWeight: 600, 
     },
     confirmBtn: {
-        
+        backgroundColor: "blue",
+        padding: 10,
+        borderRadius: 10,
+        marginTop: 10
     },
     confirmBtnText: {
-
+        color: "#fff",
+        textAlign: "center"
     }
 })
 
