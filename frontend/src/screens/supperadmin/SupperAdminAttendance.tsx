@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import {
   View,
   Text,
+  TextInput,
   ScrollView,
   TouchableOpacity,
 } from "react-native";
@@ -22,33 +23,29 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const SupperAdminAttendance = () => {
 
-  const navigation = useNavigation<NavigationProp>()
+  const navigation = useNavigation<NavigationProp>();
+
+  const [modalVisible, setModalVisible] = React.useState(false);
+  const [actionType, setActionType] = React.useState<"checkin" | "checkout">("checkin");
+  const [selectedChild, setSelectedChild] = React.useState<any>(null);
+
+  const [personName, setPersonName] = React.useState("");
+  const [relationship, setRelationship] = React.useState("");
 
 
-   const { attendance, fetchByDate, checkIn, checkOut, loading } = useAttendanceStore();
-   const children = useAdminStore((state) => state.childdata);
+  const { attendance, fetchByDate, checkIn, checkOut, loading } = useAttendanceStore();
+   const fetchChildren = useAdminStore((state) => state.fetchChildren);
+  const children = useAdminStore((state) => state.childdata);
 
   const today = new Date().toISOString().split("T")[0];
   useEffect(() => {
     fetchByDate(today);
+    fetchChildren();
   }, []);
 
   const getChildAttendance = (childId: string) => {
     return attendance.find((a) => a.childId?._id === childId);
   };
-
-
-  // const attendanceMap = React.useMemo(() => {
-  //   const map = new Map();
-
-  //   attendance.forEach((a) => {
-  //     if (a.childId?._id) {
-  //       map.set(a.childId._id, a);
-  //     }
-  //   });
-
-  //   return map;
-  // }, [attendance]);
 
 
 
@@ -88,16 +85,11 @@ const SupperAdminAttendance = () => {
                 {!record && (
                   <TouchableOpacity
                     style={styles.checkInBtn}
-                    onPress={() =>
-                      checkIn({
-                        childId: child?._id,
-                        daycareId: child?.daycareId,
-                        checkedInBy: {
-                          name: "Staff",
-                          relationship: "Caregiver",
-                        },
-                      })
-                    }
+                    onPress={() => {
+                      setSelectedChild(child);
+                      setActionType("checkin");
+                      setModalVisible(true);
+                    }}
                   >
                     <Text>Check In</Text>
                   </TouchableOpacity>                
@@ -106,15 +98,11 @@ const SupperAdminAttendance = () => {
                 {record && !record.timeOut && (
                   <TouchableOpacity
                     style={styles.checkOutBtn}
-                    onPress={() =>
-                      checkOut({
-                        childId: child?._id,
-                        checkedOutBy: {
-                          name: "Parent",
-                          relationship: "Mother",
-                        },
-                      })
-                    }
+                    onPress={() => {
+                      setSelectedChild(child);
+                      setActionType("checkout");
+                      setModalVisible(true);
+                    }}
                   >
                     <Text style={styles.btnText}>Check Out</Text>
                   </TouchableOpacity>
@@ -126,6 +114,75 @@ const SupperAdminAttendance = () => {
 
         {loading && <Text>Processing...</Text>}
       </ScrollView>
+
+      {modalVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View >
+              <Text style={styles.modalTitle}>
+                {actionType === "checkin" ? "Check In" : "Check Out"}
+              </Text>
+              <TouchableOpacity 
+                style={styles.cancelBtn}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+            
+
+            <TextInput
+              placeholder="Name"
+              value={personName}
+              onChangeText={setPersonName}
+              style={styles.input}
+            />
+
+            <TextInput
+              placeholder="Relationship (Father, Mother...)"
+              value={relationship}
+              onChangeText={setRelationship}
+              style={styles.input}
+            />
+
+            <TouchableOpacity
+              style={styles.confirmBtn}
+              onPress={async () => {
+                if (!personName || !relationship) return;
+
+                if (actionType === "checkin") {
+                  await checkIn({
+                    childId: selectedChild._id,
+                    daycareId: selectedChild.daycareId,
+                    checkedInBy: {
+                      name: personName,
+                      relationship,
+                    },
+                  });
+                } else {
+                  await checkOut({
+                    childId: selectedChild._id,
+                    checkedOutBy: {
+                      name: personName,
+                      relationship,
+                    },
+                  });
+                }
+
+                // reset
+                setModalVisible(false);
+                setPersonName("");
+                setRelationship("");
+                setSelectedChild(null);
+              }}
+            >
+              <Text style={styles.confirmBtnText}>Confirm</Text>
+            </TouchableOpacity>
+
+            
+          </View>
+        </View>
+      )}
     </View>
   )
 }

@@ -10,15 +10,16 @@ const useAttendanceStore = create<AttendanceState>((set, get) => ({
   error: null,
   success: null,
 
+
    //FETCH BY DATE
   fetchByDate: async (date) => {
     set({ loading: true });
     try {
-      const res = await axiosInstance.get(`/attendance?date=${date}`, {
-        withCredentials: true,
+      const res = await axiosInstance.get(`/attendance?date=${date}`);
+      set({
+        attendance: [...res.data], 
+        loading: false,
       });
-
-      set({ attendance: res.data, loading: false });
     } catch (err: any) {
       set({
         loading: false,
@@ -28,25 +29,21 @@ const useAttendanceStore = create<AttendanceState>((set, get) => ({
   },
 
 
+
   // CHECK IN
   checkIn: async (data) => {
     set({ loading: true, error: null, success: null });
-    try {
-      const res = await axiosInstance.post("/attendance/check-in", data, {
-        withCredentials: true,
-      });
 
-        //refresh today's data
+    try {
+      await axiosInstance.post("/attendance/check-in", data);
+
       const today = new Date().toISOString().split("T")[0];
       await get().fetchByDate(today);
 
-      set((state) => ({
-        attendance: [...state.attendance = res.data],
+      set({
         loading: false,
         success: "Checked in successfully",
-      }));
-
-
+      });
     } catch (err: any) {
       set({
         loading: false,
@@ -55,26 +52,22 @@ const useAttendanceStore = create<AttendanceState>((set, get) => ({
     }
   },
 
+
   
   // CHECK OUT
   checkOut: async (data) => {
     set({ loading: true, error: null, success: null });
+
     try {
-      const res = await axiosInstance.post("/attendance/check-out", data, {
-        withCredentials: true,
-      });
-        //refresh today's data
+      await axiosInstance.post("/attendance/check-out", data);
+
       const today = new Date().toISOString().split("T")[0];
       await get().fetchByDate(today);
 
-      set((state) => ({
-        attendance: state.attendance.map((a) =>
-          a._id === res.data._id ? res.data : a
-        ),
+      set({
         loading: false,
         success: "Checked out successfully",
-      }));
-
+      });
     } catch (err: any) {
       set({
         loading: false,
