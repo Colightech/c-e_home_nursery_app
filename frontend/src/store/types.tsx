@@ -1,4 +1,20 @@
+// =========================
+// USER
+// =========================
+export type User = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: "super-admin" | "admin" | "caregiver" | "parent";
+  profilePicture?: string;
+  daycareId?: string;
+};
 
+
+// =========================
+// AUTH STATE
+// =========================
 export type AuthState = {
   user: User | null;
   loading: boolean;
@@ -6,20 +22,29 @@ export type AuthState = {
   success: string | null;
 
   login: (email: string, password: string) => Promise<any>;
-  checkAuth: () => Promise<User>;
-  logout: () => void;
   register: (data: any) => Promise<any>;
+  checkAuth: () => Promise<User | null>;
+  logout: () => Promise<void>;
 };
 
 
-export type AdminStats = {
-  users: number;
-  children: number;
-  caregiver: number;
-  revenue: number;
+// =========================
+// DAYCARE
+// =========================
+export type Daycare = {
+  _id: string;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  capacity: number;
+  isActive: boolean;
 };
 
 
+// =========================
+// CHILD
+// =========================
 export type Child = {
   _id: string;
   firstName: string;
@@ -30,7 +55,7 @@ export type Child = {
   pickupPassword?: string;
   daycareId?: string;
 
-  // 👇 Parent
+  // Parent
   parentId?: {
     firstName?: string;
     lastName?: string;
@@ -38,7 +63,7 @@ export type Child = {
     phone?: string;
   };
 
-  // 👇 Emergency Contacts
+  // Emergency Contacts
   emergencyContacts?: {
     name?: string;
     phone?: string;
@@ -46,7 +71,7 @@ export type Child = {
     relationship?: string;
   }[];
 
-  // 👇 Authorized Contacts
+  // Authorized Contacts
   authorizedContacts?: {
     name?: string;
     address?: string;
@@ -55,7 +80,7 @@ export type Child = {
     details?: string;
   }[];
 
-  // 👇 Medical Info
+  // Medical Info
   medicalInfo?: {
     allergies?: {
       hasAllergies?: boolean;
@@ -69,7 +94,7 @@ export type Child = {
     vaccinationDetails?: string;
   };
 
-  // 👇 Doctor
+  // Doctor
   doctor?: {
     name?: string;
     address?: string;
@@ -77,12 +102,28 @@ export type Child = {
   };
 };
 
+
+// =========================
+// ADMIN STATS
+// =========================
+export type AdminStats = {
+  users: number;
+  children: number;
+  caregiver: number;
+  revenue: number;
+};
+
+
+// =========================
+// ADMIN STATE
+// =========================
 export type AdminState = {
   stats: AdminStats;
   loading: boolean;
   error: string | null;
+
   childdata: Child[];
-  daycare: Child[];
+  daycare: Daycare[];
 
   fetchStats: () => Promise<void>;
   fetchChildren: () => Promise<void>;
@@ -90,17 +131,39 @@ export type AdminState = {
 };
 
 
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: "super-admin" | "admin" | "caregiver" | "parent";
-  profile?: string;
+// =========================
+// ATTENDANCE
+// =========================
+export type Attendance = {
+  _id: string;
+  childId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  daycareId: string;
+
+  status: "present" | "absent" | "late";
+
+  timeIn?: string;
+  timeOut?: string;
+
+  checkedInBy?: {
+    name: string;
+    relationship: string;
+  };
+
+  checkedOutBy?: {
+    name: string;
+    relationship: string;
+  };
+
+  createdAt: string;
 };
 
 
 export type AttendanceState = {
-  attendance: any[];
+  attendance: Attendance[];
   loading: boolean;
   error: string | null;
   success: string | null;
@@ -108,4 +171,48 @@ export type AttendanceState = {
   checkIn: (data: any) => Promise<void>;
   checkOut: (data: any) => Promise<void>;
   fetchByDate: (date: string) => Promise<void>;
+};
+
+
+// =========================
+// CHAT MESSAGE
+// =========================
+export type Message = {
+  _id: string;
+  conversationId: string;
+
+  sender: string; // user._id
+
+  messageType: "text" | "image" | "video" | "document" | "contact";
+
+  text?: string;
+
+  media?: {
+    url: string;
+    fileName?: string;
+    fileType?: string;
+    fileSize?: number;
+  };
+
+  contact?: {
+    name: string;
+    phone: string;
+  };
+
+  status?: "sent" | "delivered" | "read";
+
+  createdAt: string;
+};
+
+
+// =========================
+// CHAT STATE
+// =========================
+export type ChatState = {
+  messages: Message[];
+  queue: Message[];
+
+  sendMessage: (payload: any) => Promise<void>;
+  addToQueue: (msg: Message) => void;
+  flushQueue: () => Promise<void>;
 };
