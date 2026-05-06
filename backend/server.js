@@ -1,23 +1,26 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const connectDB = require("./utils/dbConnection");
+const http = require("http");
+const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
+
+const connectDB = require("./utils/dbConnection");
+
+// ROUTES
 const authRoute = require("./routes/authRoute");
 const dashboardRoute = require("./routes/dashboardRoute");
 const attendanceRoute = require("./routes/attendanceRoute");
 const daycareRoute = require("./routes/daycareRoute");
-
-
+const chatRoute = require("./routes/chatRoute");
 
 const port = process.env.PORT || 5000;
 
 const app = express();
 
-
-// app.set("trust proxy", true);
-
-
+/* =========================
+   MIDDLEWARES
+========================= */
 app.use(cookieParser());
 app.use(express.json());
 
@@ -28,32 +31,111 @@ app.use(
   })
 );
 
-
+/* =========================
+   BASIC ROUTE
+========================= */
 app.get("/", (req, res) => {
-    res.send(`Testing express server on port ${port}`)
-})
+  res.send(`Testing express server on port ${port}`);
+});
 
-
-
+/* =========================
+   API ROUTES
+========================= */
 app.use("/api/auth", authRoute);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/api/attendance", attendanceRoute);
 app.use("/api/daycare", daycareRoute);
+app.use("/api/chat", chatRoute);
 
+/* =========================
+   HTTP SERVER + SOCKET.IO
+========================= */
+const server = http.createServer(app);
 
+const io = new Server(server, {
+  cors: {
+    origin: true,
+    credentials: true,
+  },
+});
 
-const runServer = async () => {
-    try {
-        // Database Connection
-        await connectDB();
+/**
+ * Store online users
+ * userId => socketId
+ */
+const onlineUsers = new Map();
 
-        app.listen(port, "0.0.0.0", () => {
-            console.log(`Server is running on port ${port}`);
-        })
-    } catch (error) {
-        console.log("Database connection error", error.message);
-        process.exit(1);
+/* =========================
+   SOCKET EVENTS
+========================= */
+io.on("connection", (socket) => {
+  console.log("🟢 User connected:", socket.id);
+
+  // User joins chat system
+  socket.on("addUser", (userId) => {
+    onlineUsers.set(userId, socket.id);
+
+    io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
+  });
+
+  // Send message event
+  socket.on("sendMessage", (data) => {
+    const { receiverId } = data;
+
+    const receiverSocketId = onlineUsers.get(receiverId);
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("getMessage", data);
     }
-}
+  });
+
+  // Typing indicator (optional but real-world standard)
+  socket.on("typing", ({ receiverId }) => {
+    const socketId = onlineUsers.get(receiverId);
+
+    if (socketId) {
+      io.to(socketId).emit("typing");
+    }
+  });
+
+  // Stop typing
+  socket.on("stopTyping", ({ receiverId }) => {
+    const socketId = onlineUsers.get(receiverId);
+
+    if (socketId) {
+      io.to(socketId).emit("stopTyping");
+    }
+  });
+
+  // Disconnect
+  socket.on("disconnect", () => {
+    console.log("🔴 User disconnected:", socket.id);
+
+    for (let [userId, socketId] of onlineUsers.entries()) {
+      if (socketId === socket.id) {
+        onlineUsers.delete(userId);
+        break;
+      }
+    }
+
+    io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
+  });
+});
+
+/* =========================
+   SERVER START
+========================= */
+const runServer = async () => {
+  try {
+    await connectDB();
+
+    server.listen(port, "0.0.0.0", () => {
+      console.log(`🚀 Server running on port ${port}`);
+    });
+  } catch (error) {
+    console.log("Database connection error:", error.message);
+    process.exit(1);
+  }
+};
 
 runServer();

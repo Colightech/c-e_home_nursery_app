@@ -30,7 +30,8 @@ const basePermissions = {
     "view_activity",
     "upload_child_media",
     "send_message",
-    "view_message"
+    "view_message",
+    "view_users"
   ],
 
   parent: [

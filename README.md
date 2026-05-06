@@ -13,6 +13,8 @@
 17. npm install ua-parser-js
 18. npm install natural
 19. npm install natural spelling-corrector @xenova/transformers
+20. npm install multer cloudinary
+21. npm install socket.io
 
 
 
@@ -26,6 +28,8 @@
 4. npm install @react-navigation/native  @react-navigation/native-stack  react-native-screens  react-native-safe-area-context
 5. npm install react-native-vector-icons
 6. npm install @react-native-picker/picker
+7. npm install react-native-image-picker
+8. npm install socket.io-client
 ## npx react-native log-android
 
 
