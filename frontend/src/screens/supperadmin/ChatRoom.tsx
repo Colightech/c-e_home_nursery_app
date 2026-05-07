@@ -14,6 +14,7 @@ import {
 
 import styles from "../../style/supperadmin/chatRoomStyle";
 import { useNavigation } from "@react-navigation/native";
+import { useRoute, RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation/types";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -24,12 +25,30 @@ import useAuthStore from "../../store/useAuthStore";
 import useSocket from "../../hooks/useSocket";
 
 
+
+type ChatRoom = {
+  conversationId: string;
+  receiverId: string;
+  receiverName: string;
+};
+
+
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type ChatRouteProp = RouteProp<RootStackParamList>;
+
 
 
 const ChatRoom = () => {
   const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<ChatRouteProp>();
 
+  const { conversationId, receiverId, receiverName } = route.params;
+
+  const [text, setText] = useState("");
+
+
+  const sendMessage = useChatStore((state) => state.sendMessage);
   const messages = useChatStore((state) => state.message);
   const getMessages = useChatStore((state) => state.getMessages);
   const user = useAuthStore((state) => state.user);
@@ -37,15 +56,14 @@ const ChatRoom = () => {
   console.log("user response", user);
   console.log("messages response", messages);
 
-  useSocket(user?._id || ""); // ✅
+  useSocket(user?._id || "");
 
   
+  useEffect(() => {
+    if (!conversationId) return;
 
-  // useEffect(() => {
-  //   if (!conversationId) return;
-
-  //   getMessages(conversationId);
-  // }, [conversationId]);
+    getMessages(conversationId);
+  }, [conversationId]);
 
 
   useEffect(() => {
@@ -83,6 +101,36 @@ const ChatRoom = () => {
         )}
       />
       <Text>Chat room</Text>
+
+      <View style={{ flexDirection: "row" }}>
+        <TextInput
+          value={text}
+          onChangeText={setText}
+          placeholder="Type message"
+          style={{
+            flex: 1,
+            borderWidth: 1,
+          }}
+        />
+
+        <TouchableOpacity
+          onPress={async () => {
+
+            if (!text.trim()) return;
+
+            await sendMessage({
+              receiverId,
+              text,
+              messageType: "text",
+            });
+
+            setText("");
+          }}
+        >
+          <Text>Send</Text>
+        </TouchableOpacity>
+      </View>
+      
     </View>
   );
 };

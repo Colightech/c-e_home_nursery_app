@@ -8,22 +8,31 @@ const useChatStore = create<any>((set, get) => ({
   queue: [],
 
 
+
+
     getMessages: async (conversationId: string) => {
         set({ loading: true, error: null });
 
         try {
-            const res = await axiosInstance.get(`/chat/${conversationId}`);
+
+            const res = await axiosInstance.get(
+            `/chat/${conversationId}`
+            );
 
             set({
-                messages: res.data,
-                loading: false,
+            messages: res.data,
+            loading: false,
             });
 
             return res.data;
+
         } catch (err: any) {
+
             set({
-                loading: false,
-                error: err.response?.data?.message || "Failed to fetch messages",
+            loading: false,
+            error:
+                err.response?.data?.message ||
+                "Failed to fetch messages",
             });
 
             return [];
@@ -31,16 +40,47 @@ const useChatStore = create<any>((set, get) => ({
     },
 
 
+ 
     sendMessage: async (payload: any) => {
-        const res = await axiosInstance.post("/chat/send-message", payload);
+        try {
 
-        await get().getMessages();
-        set((state: any) => ({
+            const res = await axiosInstance.post(
+            "/chat/send-message",
+            payload
+            );
+
+            // instant UI update
+            set((state: any) => ({
             messages: [...state.messages, res.data],
-        }));
+            }));
 
-        // realtime push
-        socket.emit("send_message", res.data);
+            // realtime socket
+            socket.emit("send_message", res.data);
+
+            return res.data;
+
+        } catch (err) {
+            console.log(err);
+        }
+    },
+
+
+    createConversation: async (receiverId: string) => {
+        try {
+
+            const res = await axiosInstance.post(
+            "/chat/conversation",
+            { receiverId }
+            );
+
+            return res.data;
+
+        } catch (err) {
+
+            console.log(err);
+
+            return null;
+        }
     },
 
 

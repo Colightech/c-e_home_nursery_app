@@ -56,6 +56,30 @@ const sendMessage = async (req, res) => {
 
 
 
+const getConversation = async (req, res) => {
+  try {
+    const { receiverId } = req.body;
+
+    if (!receiverId) {
+      return res.status(400).json({
+        message: "receiverId required",
+      });
+    }
+
+    const convo = await getOrCreateConversation(
+      req.user.id,
+      receiverId
+    );
+
+    res.json(convo);
+
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
 
 
 const getMessages = async (req, res) => {
@@ -155,5 +179,6 @@ const uploadMedia = async (req, res) => {
 module.exports = {
     sendMessage,
     getMessages,
-    uploadMedia
+    uploadMedia,
+    getConversation
 }
