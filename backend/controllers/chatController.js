@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const conversationModel = require("../model/conversationModel");
 const messageModel = require("../model/messageModel");
 const cloudinary = require("../lib/cloudinary");
@@ -5,21 +6,44 @@ const cloudinary = require("../lib/cloudinary");
 
 
 
+
 // find existing or create new
-const getOrCreateConversation = async (user1, user2) => {
-  let convo = await conversationModel.findOne({
-    participants: { $all: [user1, user2], $size: 2 },
-  });
+const getOrCreateConversation = async ( user1, user2 ) => {
+    try {
+      if (!user1 || !user2) {
+        throw new Error(
+          "Both users are required"
+        );
+      }
+      // normalize ids
+      const user1Id = new mongoose.Types.ObjectId(user1);
+      const user2Id = new mongoose.Types.ObjectId(user2);
 
-  if (!convo) {
-    convo = await conversationModel.create({
-      participants: [user1, user2],
-    });
-  }
+      // find existing convo
+      let convo = await conversationModel.findOne({
+          participants: {
+            $all: [user1Id, user2Id],
+            $size: 2,
+          },
+      });
 
-  return convo;
+      // create if not existing
+      if (!convo) {
+        convo = await conversationModel.create({
+            participants: [
+              user1Id,
+              user2Id,
+            ],
+        });
+      }
+
+      return convo;
+
+    } catch (error) {
+      console.log( "getOrCreateConversation error", error.message);
+      throw error;
+    }
 };
-
 
 
 
@@ -31,7 +55,7 @@ const sendMessage = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const convo = await getOrCreateConversation(req.user.id, receiverId);
+    const convo = await getOrCreateConversation(req.user._id, receiverId);
 
     const message = await messageModel.create({
       conversationId: convo._id,
@@ -67,7 +91,7 @@ const getConversation = async (req, res) => {
     }
 
     const convo = await getOrCreateConversation(
-      req.user.id,
+      req.user._id,
       receiverId
     );
 
