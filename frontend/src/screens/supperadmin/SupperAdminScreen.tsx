@@ -104,7 +104,7 @@ const SupperAdminScreen = () => {
                     navigation.replace("supperAdminHome");
                     break;
                   case 1:
-                    navigation.replace("supperchatroom");
+                    navigation.replace("chatlistscreen");
                     break;
                   case 2:
                     navigation.replace("adminchildren");

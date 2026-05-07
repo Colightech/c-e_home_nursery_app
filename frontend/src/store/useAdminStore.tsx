@@ -14,8 +14,26 @@ const useAdminStore = create<AdminState>()((set) => ({
   },
   childdata: [],
   daycare: [],
+  users: [],
   loading: false,
   error : null,
+
+
+  fetchUsers: async () => {
+    set({ loading: true, error: null });
+    try {
+      const res = await axiosInstance.get("/auth/users");
+      set({
+        users: res.data,
+      });
+    } catch (error) {
+       const message = axios.isAxiosError(error)
+        ? error.response?.data?.message || error.message
+        : "Failed to fetch users";
+
+      set({ error: message, loading: false });
+    }
+  },
 
 
   fetchStats: async () => {

@@ -9,10 +9,18 @@ export type RootStackParamList = {
 
   supperAdminSetting: undefined;
   adduser: undefined;
-  supperchatroom: undefined;
+  chatlistscreen: undefined;
   adminchildren: undefined;
   supperattendance: undefined;
   supperAdminHome: undefined;
+
+  ChatListScreen: undefined;
+
+  chatroom: {
+    conversationId: string;
+    receiverId: string;
+    receiverName: string;
+  };
 };
 
 

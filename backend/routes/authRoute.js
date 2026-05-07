@@ -2,14 +2,15 @@
 const express = require("express");
 const {
   registerUser,
-  loginUser,   
+  loginUser,
+  fetchAllUsers,
   getCurrentUser,        
   updateUser,
   refreshAccessToken,
   deleteUser,
-  logoutUser,            // admin (hard delete if you support it)
-  softDeleteUser,     // admin
-  reactivateUser,     // admin
+  logoutUser,            
+  softDeleteUser,     
+  reactivateUser,     
   verifyEmail,
   resendVerificationEmail,
   forgotPassword,
@@ -41,6 +42,7 @@ router.post("/logout", protectRoute, logoutUser);
 
  // Users (admin-managed)
 router.get("/me",               protectRoute, checkPermission("view_users"),    getCurrentUser);
+router.get("/users",            protectRoute, checkPermission("view_users"),    fetchAllUsers);
 router.put("/:id/update",       protectRoute, checkPermission("update_user"),     updateUser);
 router.delete("/:id/delete",    protectRoute, checkPermission("delete_user"),     deleteUser);
 router.put("/:id/softdelete",   protectRoute, checkPermission("update_user"),     softDeleteUser);

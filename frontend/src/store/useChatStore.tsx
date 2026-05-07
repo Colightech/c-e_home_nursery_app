@@ -15,15 +15,12 @@ const useChatStore = create<any>((set, get) => ({
 
         try {
 
-            const res = await axiosInstance.get(
-            `/chat/${conversationId}`
+            const res = await axiosInstance.get(`/chat/${conversationId}`
             );
-
             set({
-            messages: res.data,
-            loading: false,
-            });
-
+                messages: res.data,
+                loading: false,
+                });
             return res.data;
 
         } catch (err: any) {

@@ -124,10 +124,12 @@ export type AdminState = {
 
   childdata: Child[];
   daycare: Daycare[];
+  users: User[];
 
   fetchStats: () => Promise<void>;
   fetchChildren: () => Promise<void>;
   fetchDaycare: () => Promise<void>;
+  fetchUsers: () => Promise<void>;
 };
 
 

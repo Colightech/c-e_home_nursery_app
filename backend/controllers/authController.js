@@ -333,6 +333,23 @@ const logoutUser = async (req, res) => {
 };
 
 
+const fetchAllUsers = async (req, res) => {
+  try {
+    const users = await usersModel.find()
+
+    if(!users) {
+      return res.status(403).json({
+        error: true,
+        message: "users not found"
+      })
+    }
+    return res.status(200).json(users);
+  } catch (error) {
+    
+  }
+}
+
+
 const getCurrentUser = async (req, res) => {
   try {
 
@@ -866,6 +883,7 @@ const forgotPassword = async (req, res) => {
 };
 
 
+
 const resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
@@ -932,6 +950,7 @@ module.exports = {
     registerUser,
     loginUser,
     logoutUser,
+    fetchAllUsers,
     getCurrentUser,
     updateUser,
     deleteUser,

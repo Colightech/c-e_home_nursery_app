@@ -95,7 +95,6 @@ const getMessages = async (req, res) => {
                 message: "message not found"
             })
         }
-
         res.json(messages);
     } catch (error) {
         return res.status(500).json({
