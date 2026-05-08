@@ -62,7 +62,7 @@ const useChatStore = create<any>((set, get) => ({
     },
 
 
-    createConversation: async (receiverId: string) => {
+    getConversation: async (receiverId: string) => {
         try {
 
             const res = await axiosInstance.post(

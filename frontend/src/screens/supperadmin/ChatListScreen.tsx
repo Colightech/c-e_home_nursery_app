@@ -12,6 +12,8 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import type { RootStackParamList } from "../../navigation/types";
 import useAdminStore from "../../store/useAdminStore";
 import useChatStore from "../../store/useChatStore";
+import styles from "../../style/supperadmin/chatListStyle";
+import Avatar from "../../components/Avater";
 
 type NavigationProp =
   NativeStackNavigationProp<
@@ -25,7 +27,7 @@ const ChatListScreen = () => {
 
   const users = useAdminStore((state) => state.users);
   const fetchUsers = useAdminStore((state) => state.fetchUsers);
-  const createConversation = useChatStore((state) => state.createConversation);
+  const getConversation = useChatStore((state) => state.getConversation);
   
 
   React.useEffect(() => {
@@ -34,7 +36,7 @@ const ChatListScreen = () => {
 
   const openChat = async (selectedUser: any) => {
 
-    const convo = await createConversation(selectedUser._id);
+    const convo = await getConversation(selectedUser._id);
     console.log("convo response", convo);
     if (!convo) return;
 
@@ -47,42 +49,44 @@ const ChatListScreen = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <TouchableOpacity
-        onPress={() => navigation.replace("supperadmin")}
-      >
-        <Ionicons name="chevron-back" size={35} color="black" />
-      </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.backText}>
+        <TouchableOpacity
+          onPress={() => navigation.replace("supperadmin")}
+        >
+          <Ionicons name="chevron-back" size={25} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Chats</Text>
+      </View>
 
-      <FlatList
-        data={users}
-        keyExtractor={(item) => item._id}
+      <View style={styles.chats}>
+        <FlatList
+          data={users}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => (
+            <View style={styles.chatsItemContainer}>
+              <Avatar 
+                imageUrl=""
+                name={`${item.firstName} ${item.lastName}`} 
+              />
 
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => openChat(item)}
-            style={{
-              padding: 15,
-              borderBottomWidth: 1,
-              borderColor: "#ddd",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "600",
-              }}
-            >
-              {item.firstName} {item.lastName}
-            </Text>
+              <TouchableOpacity
+                onPress={() => openChat(item)}
+                style={styles.chatsItem}
+              >
+                <Text style={styles.name}>
+                  {item.firstName} {item.lastName}
+                </Text>
 
-            <Text>
-              {item.role}
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
-
+                <Text>
+                  {item.role}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        />
+      </View>
+     
     </View>
   );
 };
