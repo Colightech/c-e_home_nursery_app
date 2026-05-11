@@ -1,16 +1,6 @@
-import React, {
-  useEffect,
-  useState,
-} from "react";
 
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  Text,
-} from "react-native";
-
+import React, { useEffect, useState } from "react";
+import { View, TextInput, TouchableOpacity, FlatList, Text, ScrollView} from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation/types";
@@ -38,10 +28,15 @@ const ChatRoom = () => {
 
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ChatRouteProp>();
-  // 👇 ROUTE PARAMS
-  const {conversationId, receiverId, receiverName} = route.params;
+
+  // const {conversationId = null, receiverId, receiverName} = route.params || {};
+
+  const routeConversationId = route.params?.conversationId || null;
+  const { receiverId, receiverName } = route.params;
+  const [conversationId, setConversationId] = useState(routeConversationId);
 
   const [text, setText] = useState("");
+ 
 
   const user = useAuthStore((state) => state.user);
   const messages = useChatStore((state) => state.messages);
@@ -49,23 +44,40 @@ const ChatRoom = () => {
   const getMessages = useChatStore((state) => state.getMessages);
 
   console.log("messages response", messages);
-  console.log("conversationId response", conversationId);
+  console.log("user response", user);
+
+  console.log("USER ID IN CHAT ROOM:", user?._id);
+  console.log("USER IN CHAT ROOM:", user);
 
   useSocket(user?._id || "");
 
+
   useEffect(() => {
+    // clear old messages first
+    useChatStore.setState({
+      messages: [],
+    });
+
     if (!conversationId) return;
 
     getMessages(conversationId);
+
   }, [conversationId]);
+
+
 
   //SOCKET LISTENERS
   useEffect(() => {
     socket.on("receive_message", (message) => {
+      if (message.conversationId !== conversationId) {
+        return;
+      }
       useChatStore.setState((state: any) => ({
-        messages: [...state.messages, message ],
+        messages: [...state.messages, message],
       }));
+
     });
+
 
     socket.on("message_read_update", ({ messageId }) => {
       useChatStore.setState((state: any) => ({
@@ -97,17 +109,15 @@ const ChatRoom = () => {
       </View>
 
       {/* MESSAGES */}
-      <FlatList
-        data={messages}
-        keyExtractor={(item: any) => item._id}
-        renderItem={({ item }) => (
-          <MessageBubble msg={item} user={user} />
-        )}
-
-        contentContainerStyle={{
-          padding: 10,
-        }}
-      />
+        <FlatList
+          data={messages}
+          keyExtractor={(item: any) => item._id}
+          renderItem={({ item }) => (
+            <MessageBubble msg={item} user={user} />
+          )}
+          contentContainerStyle={{ padding: 10}}
+        />
+    
 
       {/* INPUT */}
       <View
@@ -135,20 +145,23 @@ const ChatRoom = () => {
           style={{ marginLeft: 10}}
           onPress={async () => {
             if (!text.trim()) return;
-            await sendMessage({
+
+            const res = await sendMessage({
+              conversationId,
               receiverId,
               text,
               messageType: "text",
             });
 
+            // first message creates conversation
+            if (!conversationId && res?.conversationId) {
+              setConversationId(res.conversationId);
+            }
+
             setText("");
           }}
         >
-          <Ionicons
-            name="send"
-            size={24}
-            color="blue"
-          />
+          <Ionicons name="send" size={24} color="blue"/>
         </TouchableOpacity>
 
       </View>

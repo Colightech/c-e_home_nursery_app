@@ -17,7 +17,7 @@ export type RootStackParamList = {
   ChatListScreen: undefined;
 
   chatroom: {
-    conversationId: string;
+     conversationId?: string | null;
     receiverId: string;
     receiverName: string;
   };

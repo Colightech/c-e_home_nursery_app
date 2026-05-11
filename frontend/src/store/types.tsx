@@ -124,12 +124,11 @@ export type AdminState = {
 
   childdata: Child[];
   daycare: Daycare[];
-  users: User[];
+
 
   fetchStats: () => Promise<void>;
   fetchChildren: () => Promise<void>;
   fetchDaycare: () => Promise<void>;
-  fetchUsers: () => Promise<void>;
 };
 
 
@@ -183,7 +182,11 @@ export type Message = {
   _id: string;
   conversationId: string;
 
-  sender: string; // user._id
+  sender: {
+    _id: string;
+    firstName?: string;
+    lastName?: string;
+  } | string;
 
   messageType: "text" | "image" | "video" | "document" | "contact";
 
@@ -213,8 +216,12 @@ export type Message = {
 export type ChatState = {
   messages: Message[];
   queue: Message[];
+  chatUsers: Message[],
+  searchResults: Message[],
 
   sendMessage: (payload: any) => Promise<void>;
   addToQueue: (msg: Message) => void;
   flushQueue: () => Promise<void>;
+  getChatUsers: () => Promise<void>;
+  searchUsers: (search: string) => Promise<void>;
 };

@@ -10,25 +10,55 @@ type Props = {
 };
 
 const MessageBubble = ({ msg, user }: Props) => {
-  const isMe = msg.sender === user?._id;
+
+
+
+  const senderId = typeof msg.sender === "object"
+      ? msg.sender._id?.toString()
+      : msg.sender?.toString();
+
+  const isMyMessage = senderId === user?._id?.toString();
+
+
 
   return (
     <View
-      style={[
-        styles.bubble,
-        isMe ? styles.myMsg : styles.otherMsg,
-      ]}
+      style={{ width: "100%", marginVertical: 5,
+        alignItems: isMyMessage
+          ? "flex-end"
+          : "flex-start",
+        
+      }}
     >
-      {msg.text && <Text>{msg.text}</Text>}
+      <View style={{
+          maxWidth: "75%",
+          padding: 10,
+          borderRadius: 12,
+          backgroundColor: isMyMessage
+          ? "#e082f3"
+          : "#E5E5EA",
+        }}
+      >
 
-      {msg.media?.url && (
-        <Image source={{ uri: msg.media.url }} style={styles.image} />
-      )}
+        {msg.text && (
+          <Text style={{
+              color: isMyMessage
+                ? "white"
+                : "black",
+            }}>
+            {msg.text}
+          </Text>
+        )}
 
-      <Text>
-        {new Date(msg.createdAt).toLocaleTimeString()}
-      </Text>
-      <Text></Text>
+        {msg.media?.url && (
+          <Image source={{ uri: msg.media.url }} style={styles.image} />
+        )}
+
+        <Text>
+          {new Date(msg.createdAt).toLocaleTimeString()}
+        </Text>
+        <Text></Text>
+      </View>
     </View>
   );
 };

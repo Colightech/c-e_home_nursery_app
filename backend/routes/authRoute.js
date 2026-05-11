@@ -43,10 +43,11 @@ router.post("/logout", protectRoute, logoutUser);
  // Users (admin-managed)
 router.get("/me",               protectRoute, checkPermission("view_users"),    getCurrentUser);
 router.get("/users",            protectRoute, checkPermission("view_users"),    fetchAllUsers);
-router.put("/:id/update",       protectRoute, checkPermission("update_user"),     updateUser);
-router.delete("/:id/delete",    protectRoute, checkPermission("delete_user"),     deleteUser);
-router.put("/:id/softdelete",   protectRoute, checkPermission("update_user"),     softDeleteUser);
-router.put("/:id/reactivate",   protectRoute, checkPermission("update_user"),     reactivateUser);
+
+router.put("/:id/update",       protectRoute, checkPermission("update_user"),   updateUser);
+router.delete("/:id/delete",    protectRoute, checkPermission("delete_user"),   deleteUser);
+router.put("/:id/softdelete",   protectRoute, checkPermission("update_user"),   softDeleteUser);
+router.put("/:id/reactivate",   protectRoute, checkPermission("update_user"),   reactivateUser);
 
 
 

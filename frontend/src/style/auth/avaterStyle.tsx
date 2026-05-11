@@ -4,8 +4,8 @@ import { StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
     container : {
-        width: 70,
-        height: 70,
+        width: 60,
+        height: 60,
         borderRadius: 50,
         backgroundColor: "#8B067B",
         flexDirection: "column",

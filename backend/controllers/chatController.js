@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const conversationModel = require("../model/conversationModel");
 const messageModel = require("../model/messageModel");
 const cloudinary = require("../lib/cloudinary");
+const usersModel = require("../model/usersModel");
 
 
 
@@ -72,7 +73,10 @@ const sendMessage = async (req, res) => {
 
     await convo.save();
 
-    res.status(201).json(message);
+    res.status(201).json({
+      message,
+      conversationId: convo._id,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -80,8 +84,169 @@ const sendMessage = async (req, res) => {
 
 
 
-const getConversation = async (req, res) => {
+const searchUsers = async ( req, res ) => {
   try {
+    const search = String( req.query.search || "").trim();
+    if (!search) {
+      return res.json([]);
+    }
+    const users = await usersModel.find({
+        _id: {
+          $ne: req.user._id,
+        },
+        $or: [
+          {
+            firstName: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+
+          {
+            lastName: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+
+          {
+            email: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+
+        ],
+      }).select("-password");
+    return res.json(users);
+
+  } catch (error) {
+    return res.status(500).json({
+      error: true,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+// const getChatUsers = async (req, res) => {
+//   try {
+
+//     const myId = req.user.id;
+
+//     // get all conversations involving current user
+//     const conversations = await conversationModel.find({
+//       participants: myId,
+//     }).sort({ updatedAt: -1 });
+
+//     // extract other users ids
+//     const userIds = conversations.map((convo) => {
+//       const otherUser = convo.participants.find(
+//         (id) => id.toString() !== myId.toString()
+//       );
+//       return otherUser;
+//     });
+
+//     // remove duplicates
+//     const uniqueUserIds = [...new Set(userIds.map((id) => id.toString()))];
+
+//     // fetch users
+//     const users = await usersModel.find({
+//       _id: { $in: uniqueUserIds },
+//     }).select("-password");
+
+//     // attach conversationId
+//     const formattedUsers = users.map((user) => {
+
+//       const convo = conversations.find((c) =>
+//         c.participants.some(
+//           (id) => id.toString() === user._id.toString()
+//         )
+//       );
+
+//       return {
+//         _id: user._id,
+//         firstName: user.firstName,
+//         lastName: user.lastName,
+//         role: user.role,
+//         profilePicture: user.profilePicture,
+//         conversationId: convo?._id,
+//         updatedAt: convo?.updatedAt,
+//         lastMessage: convo?.lastMessage,
+//       };
+//     });
+
+//     return res.status(200).json(formattedUsers);
+
+//   } catch (error) {
+//     return res.status(500).json({
+//       error: true,
+//       message: error.message,
+//     });
+//   }
+// };
+
+
+
+const getChatUsers = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // find all conversations where user participates
+    const conversations = await conversationModel
+      .find({ participants: userId })
+      .populate("participants", "firstName lastName profilePicture role");
+
+    // extract "other users"
+    const chatUsers = conversations.map((convo) => {
+      return convo.participants.find(
+        (p) => p._id.toString() !== userId
+      );
+    });
+
+    res.json(chatUsers.filter(Boolean));
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+
+
+
+// const getConversation = async (req, res) => {
+//   try {
+//     const { receiverId } = req.body;
+
+//     if (!receiverId) {
+//       return res.status(400).json({
+//         message: "receiverId required",
+//       });
+//     }
+
+//     const convo = await getOrCreateConversation(
+//       req.user._id,
+//       receiverId
+//     );
+
+//     res.json(convo);
+
+//   } catch (err) {
+//     res.status(500).json({
+//       message: err.message,
+//     });
+//   }
+// };
+
+
+
+
+const findConversation = async (req, res) => {
+  try {
+
     const { receiverId } = req.body;
 
     if (!receiverId) {
@@ -90,19 +255,28 @@ const getConversation = async (req, res) => {
       });
     }
 
-    const convo = await getOrCreateConversation(
-      req.user._id,
-      receiverId
-    );
+    const convo = await conversationModel.findOne({
+      participants: {
+        $all: [req.user._id, receiverId],
+        $size: 2,
+      },
+    });
+
+    if (!convo) {
+      return res.json(null);
+    }
 
     res.json(convo);
 
-  } catch (err) {
+  } catch (error) {
+
     res.status(500).json({
-      message: err.message,
+      message: error.message,
     });
   }
 };
+
+
 
 
 
@@ -111,7 +285,7 @@ const getMessages = async (req, res) => {
         const { conversationId } = req.params;
         const messages = await messageModel.find({ conversationId })
         .sort({ createdAt: 1 })
-        .populate("sender", "firstName lastName");
+        .populate("sender", "_id firstName lastName");
 
         if (!messages) {
             return res.status(403).json({
@@ -202,6 +376,8 @@ const uploadMedia = async (req, res) => {
 module.exports = {
     sendMessage,
     getMessages,
+    searchUsers,
+    getChatUsers,
     uploadMedia,
-    getConversation
+    findConversation,
 }
