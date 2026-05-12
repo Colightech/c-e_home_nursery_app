@@ -126,6 +126,42 @@ const useChatStore = create<any>((set, get) => ({
     },
 
 
+    uploadMedia: async (file: any) => {
+        set({ loading: true, error: null });
+
+        try {
+
+            const formData = new FormData();
+
+            formData.append("file", {
+                uri: file.uri,
+                name: file.name || "media",
+                type: file.type,
+            } as any);
+
+            const res = await axiosInstance.post("/chat/upload", formData, {
+                headers: {
+                "Content-Type": "multipart/form-data",
+                },
+            });
+
+            set({ loading: false });
+
+            return res.data;
+
+        } catch (error) {
+            const message = axios.isAxiosError(error)
+                ? error.response?.data?.message || error.message
+                : "Upload failed";
+
+            set({ loading: false, error: message });
+            return null;
+        }
+    },
+
+
+
+
 
     addToQueue: (msg: any) =>
         set((state: any) => ({
@@ -140,6 +176,9 @@ const useChatStore = create<any>((set, get) => ({
         }
         set({ queue: [] });
     },
+
+
+
 
 }));
 

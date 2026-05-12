@@ -77,6 +77,7 @@ const useAuthStore = create<AuthState>()(
         }
       },
 
+      
       //LOGOUT
       logout: async () => {
         try {

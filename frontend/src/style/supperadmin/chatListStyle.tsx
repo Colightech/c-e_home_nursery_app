@@ -35,6 +35,7 @@ const styles = StyleSheet.create({
     searchInput: {
         paddingHorizontal: 10,
         height: 45,
+        width: "90%"
     },
     chatsItem : { 
         padding: 15, borderBottomWidth: 0.5, borderColor: "#ddd", 

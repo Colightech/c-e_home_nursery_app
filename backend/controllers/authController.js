@@ -351,7 +351,6 @@ const fetchAllUsers = async (req, res) => {
 
 
 
-
 const getCurrentUser = async (req, res) => {
   try {
 
@@ -366,7 +365,7 @@ const getCurrentUser = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
-        id: user._id,
+        _id: user._id,
         name: `${user.firstName} ${user.lastName}`,
         email: user.email,
         role: user.role,

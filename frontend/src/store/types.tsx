@@ -224,4 +224,5 @@ export type ChatState = {
   flushQueue: () => Promise<void>;
   getChatUsers: () => Promise<void>;
   searchUsers: (search: string) => Promise<void>;
+  uploadMedia: (file: any) => Promise<void>;
 };

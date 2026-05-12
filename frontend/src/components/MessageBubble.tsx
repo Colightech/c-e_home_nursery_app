@@ -23,7 +23,7 @@ const MessageBubble = ({ msg, user }: Props) => {
 
   return (
     <View
-      style={{ width: "100%", marginVertical: 5,
+      style={{ width: "100%", marginVertical: 5, paddingHorizontal: 10,
         alignItems: isMyMessage
           ? "flex-end"
           : "flex-start",
@@ -35,7 +35,7 @@ const MessageBubble = ({ msg, user }: Props) => {
           padding: 10,
           borderRadius: 12,
           backgroundColor: isMyMessage
-          ? "#e082f3"
+          ? "#fbcbff"
           : "#E5E5EA",
         }}
       >
@@ -43,7 +43,7 @@ const MessageBubble = ({ msg, user }: Props) => {
         {msg.text && (
           <Text style={{
               color: isMyMessage
-                ? "white"
+                ? "black"
                 : "black",
             }}>
             {msg.text}
@@ -54,7 +54,7 @@ const MessageBubble = ({ msg, user }: Props) => {
           <Image source={{ uri: msg.media.url }} style={styles.image} />
         )}
 
-        <Text>
+        <Text style={styles.time}>
           {new Date(msg.createdAt).toLocaleTimeString()}
         </Text>
         <Text></Text>

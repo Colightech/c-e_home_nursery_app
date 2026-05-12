@@ -7,7 +7,7 @@ const styles = StyleSheet.create({
         width: 60,
         height: 60,
         borderRadius: 50,
-        backgroundColor: "#8B067B",
+        backgroundColor: "#fbcbff",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center"
@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
     },
     nameText : {
         fontSize: 25,
-        color: "#fff",
+        color: "black",
         fontWeight: 600
     },
     avaterIcon: {

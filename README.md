@@ -30,6 +30,7 @@
 6. npm install @react-native-picker/picker
 7. npm install react-native-image-picker
 8. npm install socket.io-client
+9. npm install @react-native-documents/picker
 ## npx react-native log-android
 
 
