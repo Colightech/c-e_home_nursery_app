@@ -1,10 +1,12 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, TextInput, TouchableOpacity, FlatList, Text, ScrollView, ImageBackground} from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation/types";
 import { pick } from "@react-native-documents/picker";
+import { Animated } from "react-native";
+import { launchImageLibrary } from "react-native-image-picker";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import socket from "../../socket/socket";
 import styles from "../../style/supperadmin/chatRoomStyle";
@@ -13,6 +15,8 @@ import useAuthStore from "../../store/useAuthStore";
 import useSocket from "../../hooks/useSocket";
 import MessageBubble from "../../components/MessageBubble";
 import Avatar from "../../components/Avater";
+import  requestMediaPermission  from "../../utils/requestMediaPermission";
+
 
 type NavigationProp =
   NativeStackNavigationProp<
@@ -31,14 +35,16 @@ const ChatRoom = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ChatRouteProp>();
 
-  // const {conversationId = null, receiverId, receiverName} = route.params || {};
-
   const routeConversationId = route.params?.conversationId || null;
   const { receiverId, receiverName } = route.params;
   const [conversationId, setConversationId] = useState(routeConversationId);
 
   const [text, setText] = useState("");
- 
+  const [showAttachments, setShowAttachments] = useState<boolean>(false);
+
+  // ANIMATED VALUES
+  const slideAnim = useRef( new Animated.Value(300)).current;
+
 
   const user = useAuthStore((state) => state.user);
   const messages = useChatStore((state) => state.messages);
@@ -95,50 +101,147 @@ const ChatRoom = () => {
   }, []);
 
 
+  useEffect(() => {
+      Animated.spring(slideAnim, {
+        toValue: showAttachments ? 0 : 300,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+  }, [showAttachments]);
 
 
-  const handlePickMedia = async () => {
-    
+
+  const handlePickDocument = async () => {
     try {
+
       const [file] = await pick({
         allowMultiSelection: false,
+
+        // DOCUMENTS ONLY
         type: [
-          "image/*",
-          "video/*",
           "application/pdf",
           "application/msword",
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
           "application/vnd.ms-excel",
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+
           "text/plain",
         ],
       });
 
-      const uploadedFile = await uploadMedia(file);
+      if (!file) return;
+
+      // upload file
+      const uploadedFile =
+        await uploadMedia(file);
+
+      if (!uploadedFile) return;
+
+      // send chat message
+      const res = await sendMessage({
+        conversationId,
+        receiverId,
+
+        // optional message text
+        text: uploadedFile.fileName,
+
+        messageType: "file",
+
+        media: {
+          url: uploadedFile.url,
+          fileName: uploadedFile.fileName,
+          fileType: uploadedFile.fileType,
+          fileSize: uploadedFile.fileSize,
+        },
+      });
+
+      // create conversation if first message
+      if (!conversationId && res?.conversationId) {
+        setConversationId(res.conversationId);
+      }
+
+      // close attachment tray
+      setShowAttachments(false);
+
+    } catch (error) {
+      console.log("DOCUMENT PICK ERROR:", error);
+    }
+  };
+
+
+
+  const handlePickImage = async () => {
+
+    try {
+
+      const hasPermission = await requestMediaPermission();
+
+      if (!hasPermission) {
+        console.log("Permission denied");
+        return;
+      }
+      const result = await launchImageLibrary({
+          mediaType: "mixed",
+          quality: 0.8,
+          selectionLimit: 1,
+        });
+
+      if (result.didCancel) return;
+
+      const asset = result.assets?.[0];
+
+      if (!asset) return;
+
+      console.log("SELECTED ASSET:", asset);
+
+      // upload
+      const uploadedFile = await uploadMedia(asset);
+
+      console.log( "UPLOADED FILE:", uploadedFile);
 
       if (!uploadedFile) return;
 
       const res = await sendMessage({
         conversationId,
         receiverId,
+
         text: uploadedFile.url,
+
         messageType:
-          file.type?.startsWith("image")
-            ? "image"
-            : file.type?.startsWith("video")
+          asset.type?.startsWith("video")
             ? "video"
-            : "file",
+            : "image",
+
         media: uploadedFile,
       });
 
-      if (!conversationId && res?.conversationId) {
-        setConversationId(res.conversationId);
+      console.log("MESSAGE RESPONSE:", res);
+
+      if (!conversationId &&
+        res?.conversationId) {
+
+        setConversationId(
+          res.conversationId
+        );
       }
 
+      setShowAttachments(false);
+
     } catch (error) {
-      console.log(error);
+      console.log(
+        "IMAGE PICK ERROR:",
+        error
+      );
     }
   };
+
+
+  const handleOpenCamera = () => {
+
+  }
+
 
 
 
@@ -187,8 +290,9 @@ const ChatRoom = () => {
           style={styles.inputText}
         />
 
+        {/* OPEN ATTACHMENT TRAY BUTTON*/}
         <TouchableOpacity
-          onPress={handlePickMedia}
+          onPress={() => setShowAttachments(prev => !prev)}
           style={{ marginRight: 10 }}
         >
           <Ionicons name="attach" size={24} color="black"/>
@@ -216,9 +320,70 @@ const ChatRoom = () => {
         >
           <Ionicons name="send" size={24} color="blue"/>
         </TouchableOpacity>
-
       </View>
-     
+
+  
+      {/* OPEN ATTACHMENT TRAY */}
+      <Animated.View
+        style={[
+            styles.openAttachmentContainer,
+            {
+              transform: [
+                { translateY: slideAnim }
+              ],
+
+              opacity: showAttachments ? 1 : 0,
+            },
+        ]}
+      >
+
+        <View style={styles.attachmentFlex}>
+          {/* GALLERY */}
+          <TouchableOpacity
+            style={styles.attachItems}
+            onPress={handlePickImage}
+          >
+            <View style={styles.galleryIcon}>
+              <Ionicons  name="images"  size={28}  color="white" />
+            </View>
+
+            <Text style={styles.text}>
+              Gallery
+            </Text>
+          </TouchableOpacity>
+
+
+          {/* CAMERA */}
+          <TouchableOpacity
+            style={styles.attachItems}
+            onPress={handleOpenCamera}
+          >
+            <View style={styles.cameraIcon}>
+              <Ionicons  name="camera"  size={28} color="white"/>
+            </View>
+
+            <Text style={styles.text}>
+              Camera
+            </Text>
+          </TouchableOpacity>
+
+
+          {/* DOCUMENT */}
+          <TouchableOpacity
+            style={styles.attachItems}
+            onPress={handlePickDocument}
+          >
+            <View style={styles.documentIcon}>
+              <Ionicons  name="document" size={28}  color="white" />
+            </View>
+
+            <Text style={styles.text}>
+              Document
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+      </Animated.View>   
     </View>
   );
 };

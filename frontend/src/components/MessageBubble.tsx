@@ -54,6 +54,22 @@ const MessageBubble = ({ msg, user }: Props) => {
           <Image source={{ uri: msg.media.url }} style={styles.image} />
         )}
 
+         {/* FILE MESSAGE */}
+          {
+            msg.messageType === "file" && (
+              <View
+                style={{
+                  padding: 10,
+                  backgroundColor: "#eee",
+                  borderRadius: 10,
+                }}
+              >
+                <Text>
+                  {msg.media?.fileName}
+                </Text>
+              </View>
+            )
+          }
         <Text style={styles.time}>
           {new Date(msg.createdAt).toLocaleTimeString()}
         </Text>

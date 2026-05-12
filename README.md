@@ -31,28 +31,14 @@
 7. npm install react-native-image-picker
 8. npm install socket.io-client
 9. npm install @react-native-documents/picker
+
+## NOT INSTALL YET
+10. npm install react-native-audio-recorder-player
+11. npm install react-native-contacts
+12. npm install react-native-geolocation-service
+13. npm install react-native-maps
+14. npm install react-native-video
+15. npm install react-native-permissions
 ## npx react-native log-android
 
 
-
-
-
-
-
-
-await axios.post("/api/register", data, {
-  headers: {
-    "x-platform": deviceInfo.platform,
-    "x-app-version": deviceInfo.servion,
-    "x-device-id": deviceInfo.deviceId,
-  }
-});
-
-
-await axios.post("/api/register", data, {
-  headers: {
-    "x-platform": "android",
-    "x-app-version": "1.0.0",
-    "x-device-id": "...",
-  }
-});

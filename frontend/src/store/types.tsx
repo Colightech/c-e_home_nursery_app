@@ -188,9 +188,10 @@ export type Message = {
     lastName?: string;
   } | string;
 
-  messageType: "text" | "image" | "video" | "document" | "contact";
+  messageType: "text" | "image" | "file" | "video" | "document" | "contact";
 
   text?: string;
+
 
   media?: {
     url: string;
