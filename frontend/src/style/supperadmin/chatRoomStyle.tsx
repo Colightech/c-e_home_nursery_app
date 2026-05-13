@@ -91,8 +91,10 @@ const styles = StyleSheet.create({
     time: {
         flexDirection: "row",
         textAlign: "right",
-        marginTop: 10,
-        fontSize: 10,
+       
+        fontSize: 12,
+        fontWeight: "600",
+        color: "grey"
     },
     bubble: {
         
@@ -104,7 +106,10 @@ const styles = StyleSheet.create({
 
     },
     image: {
-        
+        width: 220,
+        height: 220,
+        borderRadius: 10,
+        marginTop: 5,
     }
 })
 

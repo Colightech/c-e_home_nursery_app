@@ -39,6 +39,8 @@
 13. npm install react-native-maps
 14. npm install react-native-video
 15. npm install react-native-permissions
+16. npm install react-native-nitro-sound
+17. npm install react-native-nitro-modules
 ## npx react-native log-android
 
 

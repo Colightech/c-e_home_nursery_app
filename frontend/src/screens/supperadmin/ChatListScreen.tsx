@@ -26,8 +26,8 @@ const ChatListScreen = () => {
   const searchUsers = useChatStore((state) => state.searchUsers);
   const findConversation = useChatStore((state) => state.findConversation);
 
-  console.log("searchResults response", searchResults);
-  console.log("chatUsers response", chatUsers);
+  // console.log("searchResults response", searchResults);
+  // console.log("chatUsers response", chatUsers);
 
   // existing chats
   useEffect(() => {

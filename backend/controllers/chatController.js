@@ -131,65 +131,6 @@ const searchUsers = async ( req, res ) => {
 
 
 
-// const getChatUsers = async (req, res) => {
-//   try {
-
-//     const myId = req.user.id;
-
-//     // get all conversations involving current user
-//     const conversations = await conversationModel.find({
-//       participants: myId,
-//     }).sort({ updatedAt: -1 });
-
-//     // extract other users ids
-//     const userIds = conversations.map((convo) => {
-//       const otherUser = convo.participants.find(
-//         (id) => id.toString() !== myId.toString()
-//       );
-//       return otherUser;
-//     });
-
-//     // remove duplicates
-//     const uniqueUserIds = [...new Set(userIds.map((id) => id.toString()))];
-
-//     // fetch users
-//     const users = await usersModel.find({
-//       _id: { $in: uniqueUserIds },
-//     }).select("-password");
-
-//     // attach conversationId
-//     const formattedUsers = users.map((user) => {
-
-//       const convo = conversations.find((c) =>
-//         c.participants.some(
-//           (id) => id.toString() === user._id.toString()
-//         )
-//       );
-
-//       return {
-//         _id: user._id,
-//         firstName: user.firstName,
-//         lastName: user.lastName,
-//         role: user.role,
-//         profilePicture: user.profilePicture,
-//         conversationId: convo?._id,
-//         updatedAt: convo?.updatedAt,
-//         lastMessage: convo?.lastMessage,
-//       };
-//     });
-
-//     return res.status(200).json(formattedUsers);
-
-//   } catch (error) {
-//     return res.status(500).json({
-//       error: true,
-//       message: error.message,
-//     });
-//   }
-// };
-
-
-
 const getChatUsers = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -215,31 +156,6 @@ const getChatUsers = async (req, res) => {
 };
 
 
-
-
-// const getConversation = async (req, res) => {
-//   try {
-//     const { receiverId } = req.body;
-
-//     if (!receiverId) {
-//       return res.status(400).json({
-//         message: "receiverId required",
-//       });
-//     }
-
-//     const convo = await getOrCreateConversation(
-//       req.user._id,
-//       receiverId
-//     );
-
-//     res.json(convo);
-
-//   } catch (err) {
-//     res.status(500).json({
-//       message: err.message,
-//     });
-//   }
-// };
 
 
 
@@ -306,67 +222,153 @@ const getMessages = async (req, res) => {
 
 
 
+// const uploadMedia = async (req, res) => {
+//   try {
+//     // Check file exists
+//     if (!req.file) {
+//       return res.status(400).json({ message: "No file uploaded" });
+//     }
+
+//     const file = req.file;
+
+//     // Validate file type (🔥 MUST be here)
+//     const allowedTypes = [
+//         "image/jpeg",
+//         "image/png",
+//         "video/mp4",
+//         "application/pdf",
+//         "application/msword", 
+//         "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+
+//         "application/vnd.ms-excel", // .xls
+//         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+
+//         "text/plain", // .txt
+//     ];
+
+//     if (!allowedTypes.includes(file.mimetype)) {
+//       return res.status(400).json({ message: "Invalid file type" });
+//     }
+
+//     // Upload to Cloudinary
+//     const result = await new Promise((resolve, reject) => {
+//       const stream = cloudinary.uploader.upload_stream(
+//         {
+//           resource_type: "auto",
+//           // Folder structure (VERY IMPORTANT)
+//           folder: `daycare/${req.user.daycareId}/chat/${req.user.id}`,
+//           //Optimization
+//           quality: "auto",
+//           fetch_format: "auto",
+//           //Resize (prevents huge images)
+//           width: 800,
+//           crop: "limit",
+//         },
+//         (error, result) => {
+//           if (error) reject(error);
+//           else resolve(result);
+//         }
+//       );
+
+//       stream.end(file.buffer);
+//     });
+
+//     //  Return structured media object
+//     res.json({
+//       url: result.secure_url,
+//       fileName: file.originalname,
+//       fileType: file.mimetype,
+//       fileSize: file.size,
+//     });
+
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+
+
+
+
+
 const uploadMedia = async (req, res) => {
   try {
-    // Check file exists
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
     const file = req.file;
 
-    // Validate file type (🔥 MUST be here)
     const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "video/mp4",
-        "application/pdf",
-        "application/msword", 
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+      "image/jpeg",
+      "image/png",
+      "image/webp",
 
-        "application/vnd.ms-excel", // .xls
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+      "video/mp4",
+      "video/quicktime",
 
-        "text/plain", // .txt
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+
+      "text/plain",
     ];
 
     if (!allowedTypes.includes(file.mimetype)) {
       return res.status(400).json({ message: "Invalid file type" });
     }
 
-    // Upload to Cloudinary
+    // Detect file category
+    const isImage = file.mimetype.startsWith("image/");
+    const isVideo = file.mimetype.startsWith("video/");
+
+    const resourceType = isImage || isVideo ? "auto" : "raw";
+
     const result = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
-          resource_type: "auto",
-          // Folder structure (VERY IMPORTANT)
-          folder: `daycare/${req.user.daycareId}/chat/${req.user.id}`,
-          //Optimization
-          quality: "auto",
-          fetch_format: "auto",
-          //Resize (prevents huge images)
-          width: 800,
-          crop: "limit",
+          resource_type: resourceType,
+
+          folder: `daycare/${req.user.daycareId}/chat/${req.user._id}`,
+
+          // ONLY optimize images/videos (NOT documents)
+          ...(isImage || isVideo
+            ? {
+                quality: "auto",
+                fetch_format: "auto",
+                width: 800,
+                crop: "limit",
+              }
+            : {}),
         },
         (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
+          if (error) {
+            console.error("CLOUDINARY ERROR:", error);
+            return reject(error);
+          }
+          resolve(result);
         }
       );
 
       stream.end(file.buffer);
     });
 
-    //  Return structured media object
-    res.json({
+    return res.status(200).json({
       url: result.secure_url,
       fileName: file.originalname,
       fileType: file.mimetype,
       fileSize: file.size,
     });
-
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("UPLOAD MEDIA ERROR:", err);
+
+    return res.status(500).json({
+      message: "Upload failed",
+      error: err.message,
+    });
   }
 };
 
