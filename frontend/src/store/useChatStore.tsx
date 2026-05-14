@@ -3,6 +3,7 @@ import { create } from "zustand";
 import socket from "../socket/socket";
 import axiosInstance from "../api/axiosInstance";
 import axios from "axios";
+import { Platform } from "react-native";
 
 let latestSearch = "";
 
@@ -83,37 +84,90 @@ const useChatStore = create<any>((set, get) => ({
 
 
     
+   
+
+    // sendMessage: async (payload: any) => {
+    //     set({ loading: true, error: null });
+
+    //     try {
+
+    //         const res = await axiosInstance.post("/chat/send-message",
+    //             {
+    //                 ...payload,
+    //                 media: payload.media
+    //                     ? JSON.stringify(payload.media)
+    //                     : null,
+    //             }
+    //         );
+
+    //         console.log("SEND MESSAGE RESPONSE IN STORE:", res.data);
+
+    //         const newMessage = res.data?.message;
+
+    //         if (!newMessage) {
+    //             throw new Error("No message returned");
+    //         }
+
+    //         set((state: any) => ({
+    //             messages: state.messages.map((msg: any) =>
+    //                 msg._id === payload.tempId
+    //                     ? newMessage
+    //                     : msg
+    //             ),
+    //         }));
+
+    //         socket.emit("send_message", newMessage);
+
+    //         return res.data;
+
+    //     } catch (error: any) {
+    //         console.log("SEND MESSAGE ERROR:", error?.response?.data || error.message);
+    //         set((state: any) => ({
+    //             messages: state.messages.map((msg: any) =>
+    //                 msg._id === payload.tempId
+    //                     ? { ...msg, status: "failed" }
+    //                     : msg
+    //             ),
+    //         }));
+
+    //         return null;
+    //     }
+    // },
+
+
+
     sendMessage: async (payload: any) => {
-         set({ loading: true, error: null });
+        set({ loading: true, error: null });
+
         try {
-            const res = await axiosInstance.post( "/chat/send-message",
-                {
-                    ...payload,
-                    media: payload.media || null, // ensure consistency
-                }
-            );
+            const res = await axiosInstance.post("/chat/send-message", payload);
+
+            console.log("SEND MESSAGE RESPONSE IN STORE:", res.data);
 
             const newMessage = res.data?.message;
 
-            if (!newMessage) {
-                throw new Error("No message returned from server");
-            }
+            if (!newMessage) throw new Error("No message returned");
 
-            // instant UI update
             set((state: any) => ({
-                messages: [...state.messages, newMessage],
-                error: null,
+                messages: state.messages.map((msg: any) =>
+                    msg._id === payload.tempId ? newMessage : msg
+                ),
+                loading: false,
             }));
 
-            // realtime socket emit
             socket.emit("send_message", newMessage);
 
-            return res.data;
-
+            return res.data; // return full response
         } catch (error: any) {
-            console.log( "SEND MESSAGE ERROR:", error?.response?.data || error.message || error);
+            set({ loading: false });
 
-            set({ error: error?.response?.data?.message || "Failed to send message"});
+            set((state: any) => ({
+                messages: state.messages.map((msg: any) =>
+                    msg._id === payload.tempId
+                        ? { ...msg, status: "failed" }
+                        : msg
+                ),
+            }));
 
             return null;
         }
@@ -139,42 +193,8 @@ const useChatStore = create<any>((set, get) => ({
 
 
 
-    // uploadMedia: async (file: any) => {
-    //     set({ loading: true, error: null });
 
-    //     try {
-
-    //         const formData = new FormData();
-
-    //         formData.append("file", {
-    //             uri: file.uri,
-    //             name: file.name || "media",
-    //             type: file.type,
-    //         } as any);
-
-    //         const res = await axiosInstance.post("/chat/upload", formData, {
-    //             headers: {
-    //             "Content-Type": "multipart/form-data",
-    //             },
-    //         });
-
-    //         set({ loading: false });
-
-    //         return res.data;
-
-    //     } catch (error) {
-    //         const message = axios.isAxiosError(error)
-    //             ? error.response?.data?.message || error.message
-    //             : "Upload failed";
-
-    //         set({ loading: false, error: message });
-    //         return null;
-    //     }
-    // },
-
-
-
-    uploadMedia: async ( file: any,
+    uploadMedia: async (file: any,
         onProgress?: (percent: number) => void) => {
 
         const formData = new FormData();
@@ -182,35 +202,34 @@ const useChatStore = create<any>((set, get) => ({
         formData.append("file", {
             uri: file.uri,
             name: file.fileName || file.name || "media",
-            type: file.type,
+            type: file.type || "application/octet-stream",
         } as any);
 
         try {
 
-            const res = await axiosInstance.post("/chat/upload-media", formData,
-            {
+            const res = await axiosInstance.post("/chat/upload", formData,{
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
 
-                onUploadProgress: (progressEvent) => {
+                timeout: 600000,
 
-                    if (!progressEvent.total) return;
+                onUploadProgress: (e) => {
+
+                    if (!e.total) return;
 
                     const percent = Math.floor(
-                        (progressEvent.loaded * 100) / progressEvent.total
+                        (e.loaded * 100) / e.total
                     );
 
-                    if (onProgress) {
-                        onProgress(percent);
-                    }
+                    onProgress?.(percent);
                 },
             });
 
             return res.data;
 
         } catch (error) {
-            console.log("UPLOAD MEDIA ERROR:",error);
+            console.log("UPLOAD MEDIA ERROR:", error);
             return null;
         }
     },

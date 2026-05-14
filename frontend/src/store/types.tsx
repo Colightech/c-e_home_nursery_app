@@ -205,7 +205,11 @@ export type Message = {
     phone: string;
   };
 
-  status?: "sent" | "delivered" | "read";
+  status?: "sent" | "delivered" | "read" | "sending";
+
+  progress?: number;
+
+  tempId?: string;
 
   createdAt: string;
 };

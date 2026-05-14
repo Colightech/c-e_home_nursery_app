@@ -110,7 +110,12 @@ const styles = StyleSheet.create({
         height: 220,
         borderRadius: 10,
         marginTop: 5,
-    }
+    },
+    video: {
+        width: 250,
+        height: 300,
+        borderRadius: 10,
+    },
 })
 
 

@@ -60,28 +60,13 @@ const MessageBubble = ({ msg, user }: Props) => {
         )}
 
 
-        {msg.messageType === "image" && msg.status === "sending" && (
-          <View style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            padding: 5,
-            borderRadius: 8
-          }}>
-            <Text style={{ color: "white", fontSize: 12 }}>
-              {msg.progress}%
-            </Text>
-          </View>
-        )}
-
-
-        {msg.messageType === "image" && msg.media?.url && (
-          <Image 
-            source={{ uri: msg.media.url }} 
-            style={styles.image}
-            resizeMode="cover"
-          />
+        {msg.messageType === "image" &&
+          msg.media?.url && (
+            <Image
+              source={{ uri: msg.media.url }}
+              style={styles.image}
+              resizeMode="cover"
+            />
         )}
 
        
@@ -90,11 +75,7 @@ const MessageBubble = ({ msg, user }: Props) => {
           msg.media?.url && (
             <Video
               source={{ uri: msg.media.url }}
-              style={{
-                width: 250,
-                height: 300,
-                borderRadius: 10,
-              }}
+              style={styles.video}
               controls
               paused={true}
               resizeMode="cover"

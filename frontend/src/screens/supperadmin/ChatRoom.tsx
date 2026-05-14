@@ -134,18 +134,12 @@ const ChatRoom = () => {
 
       const [file] = await pick({
         allowMultiSelection: false,
-
         type: [
           "application/pdf",
-
           "application/msword",
-
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-
           "application/vnd.ms-excel",
-
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-
           "text/plain",
         ],
       });
@@ -168,12 +162,14 @@ const ChatRoom = () => {
         createdAt: new Date().toISOString(),
       };
 
+      console.log("handlePickDocument: tempMessage", tempMessage);
+
       useChatStore.setState((state: any) => ({
         messages: [...state.messages, tempMessage],
       }));
 
 
-
+      console.log("handlePickDocument: before uploadedFile");
       const uploadedFile = await uploadMedia(file, (percent: any) => {
         useChatStore.setState((state: any) => ({
           messages: state.messages.map((m: any) =>
@@ -184,7 +180,7 @@ const ChatRoom = () => {
         }));
       });
 
-      console.log("UPLOADED FILE:", uploadedFile);
+      console.log("handlePickDocument: uploadedFile:", uploadedFile);
 
       if (!uploadedFile) return;
 
@@ -237,29 +233,128 @@ const ChatRoom = () => {
 
 
 
+
+  // const handlePickImage = async () => {
+  //    console.log("handlePickImage was call");
+  //   try {
+
+  //     const hasPermission = await requestMediaPermission();
+
+  //     setShowAttachments(false);
+
+  //     if (!hasPermission) {
+  //       console.log("Permission denied");
+  //       return;
+  //     }
+  //     const result = await launchImageLibrary({
+  //         mediaType: "mixed",
+  //         quality: 0.8,
+  //         selectionLimit: 1,
+  //       });
+  //     if (result.didCancel) return;
+
+  //     const asset = result.assets?.[0];
+
+  //     if (!asset) return;
+
+
+  //     const tempId = Date.now().toString();
+
+  //      console.log("handlePickImage just before tempMessage");
+  //     const tempMessage = {
+  //       _id: tempId,
+  //       conversationId,
+  //       sender: user,
+  //       messageType: asset.type?.startsWith("video")
+  //         ? "video"
+  //         : "image",
+
+  //       text: "",
+
+  //       media: { url: asset.uri},
+  //       status: "sending",
+  //       progress: 0,
+  //       createdAt: new Date().toISOString(),
+  //     };
+
+  //     console.log("handlePickImage tempMessage results", tempMessage);
+
+  //     useChatStore.setState((state: any) => ({
+  //       messages: [...state.messages, tempMessage],
+  //     }));
+
+  //     // upload
+
+  //     console.log("handlePickImage: just before uploadedFile");
+
+  //     const uploadedFile = await uploadMedia(asset, (percent: any) => {
+  //       useChatStore.setState((state: any) => ({
+  //         messages: state.messages.map((m: any) =>
+  //           m._id === tempId
+  //             ? { ...m, progress: percent }
+  //             : m
+  //         ),
+  //       }));
+  //     });
+
+  //     console.log("handlePickImage: after uploadedFile", uploadedFile);
+  //     if (!uploadedFile) return;
+
+
+  //     // const res = await sendMessage({
+  //     //   conversationId,
+  //     //   receiverId,
+  //     //   text: uploadedFile.url,
+
+  //     //   messageType: asset.type?.startsWith("video")
+  //     //       ? "video"
+  //     //       : "image",
+
+  //     //   media: uploadedFile,
+  //     // });
+
+  //     console.log("handlePickImage just before sendMessage");
+  //     const res = await sendMessage({
+  //       conversationId,
+  //       receiverId,
+  //       text: "",
+  //       messageType: asset.type?.startsWith("video") ? "video" : "image",
+  //       media: uploadedFile,
+  //       tempId,
+  //     });
+
+  //     console.log("SEND MESSAGE RESPONSE IN handlePickImage:", res.data);
+
+  //     if (!conversationId && res?.conversationId) {
+  //       setConversationId( res.conversationId );
+  //     }
+
+  //   } catch (error) {
+  //     console.log( "IMAGE PICK ERROR:", error);
+  //   }
+
+  // };
+
+
+
+
+
   const handlePickImage = async () => {
-
+     console.log("handlePickImage was call");
     try {
-
       const hasPermission = await requestMediaPermission();
+      if (!hasPermission) return;
 
       setShowAttachments(false);
 
-      if (!hasPermission) {
-        console.log("Permission denied");
-        return;
-      }
       const result = await launchImageLibrary({
-          mediaType: "mixed",
-          quality: 0.8,
-          selectionLimit: 1,
-        });
-      if (result.didCancel) return;
+        mediaType: "mixed",
+        quality: 0.8,
+        selectionLimit: 1,
+      });
 
       const asset = result.assets?.[0];
-
       if (!asset) return;
-
 
       const tempId = Date.now().toString();
       const tempMessage = {
@@ -268,62 +363,54 @@ const ChatRoom = () => {
         sender: user,
         messageType: asset.type?.startsWith("video") ? "video" : "image",
         text: "",
-        media: { uri: asset.uri },
+        media: { url: asset.uri },
         status: "sending",
         progress: 0,
         createdAt: new Date().toISOString(),
-      };
+      }
 
+       console.log("handlePickImage: after tempMessage", tempMessage);
+
+      // 1. Instant UI
       useChatStore.setState((state: any) => ({
-        messages: [...state.messages, tempMessage],
+        messages: [ ...state.messages, tempMessage ],
       }));
 
-      // upload
-      // const uploadedFile = await uploadMedia(asset);
-    
-      const uploadedFile = await uploadMedia(asset, (percent: any) => {
+       console.log("handlePickImage: before uploadedFile");
+      // 2. Upload
+      const uploadedFile = await uploadMedia(asset, (percent: number) => {
         useChatStore.setState((state: any) => ({
           messages: state.messages.map((m: any) =>
-            m._id === tempId
-              ? { ...m, progress: percent }
-              : m
+            m._id === tempId ? { ...m, progress: percent } : m
           ),
         }));
       });
 
+      console.log("handlePickImage: after uploadedFile", uploadedFile);
 
       if (!uploadedFile) return;
 
-      // const res = await sendMessage({
-      //   conversationId,
-      //   receiverId,
-      //   text: uploadedFile.url,
-
-      //   messageType: asset.type?.startsWith("video")
-      //       ? "video"
-      //       : "image",
-
-      //   media: uploadedFile,
-      // });
-
-
+      // 3. Send to DB
       const res = await sendMessage({
         conversationId,
         receiverId,
-        text: uploadedFile.url,
+        text: "",
         messageType: asset.type?.startsWith("video") ? "video" : "image",
         media: uploadedFile,
         tempId,
       });
 
+      console.log("handlePickImage: after uploadedFile", res);
+
       if (!conversationId && res?.conversationId) {
         setConversationId( res.conversationId );
       }
 
-    } catch (error) {
-      console.log( "IMAGE PICK ERROR:", error);
+    } catch (err) {
+      console.log("IMAGE ERROR:", err);
     }
   };
+
 
 
 
@@ -395,22 +482,62 @@ const ChatRoom = () => {
 
         <TouchableOpacity 
           style={{ marginLeft: 10}}
+
+          // onPress={async () => {
+          //   if (!text.trim()) return;
+
+          //   const res = await sendMessage({
+          //     conversationId,
+          //     receiverId,
+          //     text,
+          //     messageType: "text",
+          //   });
+
+          //   // first message creates conversation
+          //   if (!conversationId && res?.conversationId) {
+          //     setConversationId(res.conversationId);
+          //   }
+
+          //   setText("");
+
+          //   setTimeout(() => {
+          //     scrollRef.current?.scrollToEnd({ animated: true });
+          //   }, 100);
+          // }}
+
           onPress={async () => {
+
             if (!text.trim()) return;
+
+            const tempId = Date.now().toString();
+
+            const tempMessage = {
+              _id: tempId,
+              conversationId,
+              sender: user,
+              messageType: "text",
+              text,
+              status: "sending",
+              createdAt: new Date().toISOString(),
+            };
+
+            useChatStore.setState((state: any) => ({
+              messages: [...state.messages, tempMessage],
+            }));
+
+            setText("");
 
             const res = await sendMessage({
               conversationId,
               receiverId,
               text,
               messageType: "text",
+              tempId,
             });
 
-            // first message creates conversation
             if (!conversationId && res?.conversationId) {
               setConversationId(res.conversationId);
             }
-
-            setText("");
 
             setTimeout(() => {
               scrollRef.current?.scrollToEnd({ animated: true });
