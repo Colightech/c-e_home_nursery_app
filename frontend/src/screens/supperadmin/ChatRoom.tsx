@@ -234,111 +234,6 @@ const ChatRoom = () => {
 
 
 
-  // const handlePickImage = async () => {
-  //    console.log("handlePickImage was call");
-  //   try {
-
-  //     const hasPermission = await requestMediaPermission();
-
-  //     setShowAttachments(false);
-
-  //     if (!hasPermission) {
-  //       console.log("Permission denied");
-  //       return;
-  //     }
-  //     const result = await launchImageLibrary({
-  //         mediaType: "mixed",
-  //         quality: 0.8,
-  //         selectionLimit: 1,
-  //       });
-  //     if (result.didCancel) return;
-
-  //     const asset = result.assets?.[0];
-
-  //     if (!asset) return;
-
-
-  //     const tempId = Date.now().toString();
-
-  //      console.log("handlePickImage just before tempMessage");
-  //     const tempMessage = {
-  //       _id: tempId,
-  //       conversationId,
-  //       sender: user,
-  //       messageType: asset.type?.startsWith("video")
-  //         ? "video"
-  //         : "image",
-
-  //       text: "",
-
-  //       media: { url: asset.uri},
-  //       status: "sending",
-  //       progress: 0,
-  //       createdAt: new Date().toISOString(),
-  //     };
-
-  //     console.log("handlePickImage tempMessage results", tempMessage);
-
-  //     useChatStore.setState((state: any) => ({
-  //       messages: [...state.messages, tempMessage],
-  //     }));
-
-  //     // upload
-
-  //     console.log("handlePickImage: just before uploadedFile");
-
-  //     const uploadedFile = await uploadMedia(asset, (percent: any) => {
-  //       useChatStore.setState((state: any) => ({
-  //         messages: state.messages.map((m: any) =>
-  //           m._id === tempId
-  //             ? { ...m, progress: percent }
-  //             : m
-  //         ),
-  //       }));
-  //     });
-
-  //     console.log("handlePickImage: after uploadedFile", uploadedFile);
-  //     if (!uploadedFile) return;
-
-
-  //     // const res = await sendMessage({
-  //     //   conversationId,
-  //     //   receiverId,
-  //     //   text: uploadedFile.url,
-
-  //     //   messageType: asset.type?.startsWith("video")
-  //     //       ? "video"
-  //     //       : "image",
-
-  //     //   media: uploadedFile,
-  //     // });
-
-  //     console.log("handlePickImage just before sendMessage");
-  //     const res = await sendMessage({
-  //       conversationId,
-  //       receiverId,
-  //       text: "",
-  //       messageType: asset.type?.startsWith("video") ? "video" : "image",
-  //       media: uploadedFile,
-  //       tempId,
-  //     });
-
-  //     console.log("SEND MESSAGE RESPONSE IN handlePickImage:", res.data);
-
-  //     if (!conversationId && res?.conversationId) {
-  //       setConversationId( res.conversationId );
-  //     }
-
-  //   } catch (error) {
-  //     console.log( "IMAGE PICK ERROR:", error);
-  //   }
-
-  // };
-
-
-
-
-
   const handlePickImage = async () => {
      console.log("handlePickImage was call");
     try {
@@ -377,14 +272,24 @@ const ChatRoom = () => {
       }));
 
        console.log("handlePickImage: before uploadedFile");
+
       // 2. Upload
       const uploadedFile = await uploadMedia(asset, (percent: number) => {
         useChatStore.setState((state: any) => ({
           messages: state.messages.map((m: any) =>
-            m._id === tempId ? { ...m, progress: percent } : m
+            m._id === tempId
+              ? {
+                  ...m,
+                  progress: percent,
+                  status: percent === 100
+                    ? "processing"
+                    : "uploading",
+                }
+              : m
           ),
         }));
       });
+
 
       console.log("handlePickImage: after uploadedFile", uploadedFile);
 
@@ -400,7 +305,7 @@ const ChatRoom = () => {
         tempId,
       });
 
-      console.log("handlePickImage: after uploadedFile", res);
+      console.log("handlePickImage: after sendMessage", res);
 
       if (!conversationId && res?.conversationId) {
         setConversationId( res.conversationId );
@@ -483,27 +388,6 @@ const ChatRoom = () => {
         <TouchableOpacity 
           style={{ marginLeft: 10}}
 
-          // onPress={async () => {
-          //   if (!text.trim()) return;
-
-          //   const res = await sendMessage({
-          //     conversationId,
-          //     receiverId,
-          //     text,
-          //     messageType: "text",
-          //   });
-
-          //   // first message creates conversation
-          //   if (!conversationId && res?.conversationId) {
-          //     setConversationId(res.conversationId);
-          //   }
-
-          //   setText("");
-
-          //   setTimeout(() => {
-          //     scrollRef.current?.scrollToEnd({ animated: true });
-          //   }, 100);
-          // }}
 
           onPress={async () => {
 

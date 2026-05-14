@@ -84,57 +84,6 @@ const useChatStore = create<any>((set, get) => ({
 
 
     
-   
-
-    // sendMessage: async (payload: any) => {
-    //     set({ loading: true, error: null });
-
-    //     try {
-
-    //         const res = await axiosInstance.post("/chat/send-message",
-    //             {
-    //                 ...payload,
-    //                 media: payload.media
-    //                     ? JSON.stringify(payload.media)
-    //                     : null,
-    //             }
-    //         );
-
-    //         console.log("SEND MESSAGE RESPONSE IN STORE:", res.data);
-
-    //         const newMessage = res.data?.message;
-
-    //         if (!newMessage) {
-    //             throw new Error("No message returned");
-    //         }
-
-    //         set((state: any) => ({
-    //             messages: state.messages.map((msg: any) =>
-    //                 msg._id === payload.tempId
-    //                     ? newMessage
-    //                     : msg
-    //             ),
-    //         }));
-
-    //         socket.emit("send_message", newMessage);
-
-    //         return res.data;
-
-    //     } catch (error: any) {
-    //         console.log("SEND MESSAGE ERROR:", error?.response?.data || error.message);
-    //         set((state: any) => ({
-    //             messages: state.messages.map((msg: any) =>
-    //                 msg._id === payload.tempId
-    //                     ? { ...msg, status: "failed" }
-    //                     : msg
-    //             ),
-    //         }));
-
-    //         return null;
-    //     }
-    // },
-
-
 
     sendMessage: async (payload: any) => {
         set({ loading: true, error: null });
@@ -193,47 +142,82 @@ const useChatStore = create<any>((set, get) => ({
 
 
 
-
-    uploadMedia: async (file: any,
+    uploadMedia: async ( file: any,
         onProgress?: (percent: number) => void) => {
 
-        const formData = new FormData();
+        return new Promise((resolve) => {
+            try {
+                
+            const formData = new FormData();
+            formData.append("file", {
+                uri: file.uri,
+                name:
+                file.fileName ||
+                file.name ||
+                "media",
 
-        formData.append("file", {
-            uri: file.uri,
-            name: file.fileName || file.name || "media",
-            type: file.type || "application/octet-stream",
-        } as any);
+                type:
+                file.type ||
+                "application/octet-stream",
+            } as any);
 
-        try {
+            const xhr = new XMLHttpRequest();
 
-            const res = await axiosInstance.post("/chat/upload", formData,{
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
+            xhr.open(
+                "POST",
+                "https://joanna-nonpredicative-oversourly.ngrok-free.dev/api/chat/upload"
+            );
+            xhr.withCredentials = true;
+            xhr.setRequestHeader(
+                "Content-Type",
+                "multipart/form-data"
+            );
 
-                timeout: 600000,
+             let lastPercent = 0;
+            xhr.upload.onprogress = (event) => {
+                if (!event.lengthComputable) return;
+                // raw percent
+                let percent = Math.floor(
+                (event.loaded / event.total) * 100
+                );
+                // HARD CLAMP (fixes 199% bug)
+                percent = Math.min(100, Math.max(0, percent));
+                // prevent backward jumps or spikes
+                if (percent < lastPercent) return;
+                lastPercent = percent;
+                onProgress?.(percent);
+            };
 
-                onUploadProgress: (e) => {
-
-                    if (!e.total) return;
-
-                    const percent = Math.floor(
-                        (e.loaded * 100) / e.total
-                    );
-
-                    onProgress?.(percent);
-                },
-            });
-
-            return res.data;
-
-        } catch (error) {
-            console.log("UPLOAD MEDIA ERROR:", error);
-            return null;
-        }
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    resolve(response);
+                } catch (e) {
+                    console.log("PARSE ERROR:", xhr.responseText);
+                    resolve(null);
+                }
+                } else {
+                console.log("UPLOAD FAILED:", xhr.responseText);
+                resolve(null);
+                }
+            };
+            xhr.onerror = () => {
+                console.log("XHR NETWORK ERROR");
+                resolve(null);
+            };
+            xhr.send(formData);
+            } catch (error) {
+            console.log("UPLOAD ERROR:", error);
+            resolve(null);
+            }
+        });
     },
 
+
+
+
+ 
 
 
 

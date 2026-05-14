@@ -105,6 +105,12 @@ const styles = StyleSheet.create({
     otherMsg: {
 
     },
+    progress: {
+        fontSize: 15,
+        opacity: 0.6,
+        textAlign: "center",
+        fontWeight: "600",
+    },
     image: {
         width: 220,
         height: 220,

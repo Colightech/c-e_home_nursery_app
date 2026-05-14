@@ -205,7 +205,7 @@ export type Message = {
     phone: string;
   };
 
-  status?: "sent" | "delivered" | "read" | "sending";
+  status?: "sent" | "delivered" | "read" | "uploading"  | "processing" | "failed";
 
   progress?: number;
 

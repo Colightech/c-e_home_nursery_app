@@ -15,6 +15,7 @@
 19. npm install natural spelling-corrector @xenova/transformers
 20. npm install multer cloudinary
 21. npm install socket.io
+22. npm install streamifier
 
 
 
@@ -31,16 +32,56 @@
 7. npm install react-native-image-picker
 8. npm install socket.io-client
 9. npm install @react-native-documents/picker
-
-## NOT INSTALL YET
 10. npm install react-native-audio-recorder-player
 11. npm install react-native-contacts
 12. npm install react-native-geolocation-service
-13. npm install react-native-maps
 14. npm install react-native-video
 15. npm install react-native-permissions
 16. npm install react-native-nitro-sound
 17. npm install react-native-nitro-modules
+
+## NOT INSTALL YET
+13. npm install react-native-maps
+14. npm install react-native-dotenv
 ## npx react-native log-android
+
+
+
+
+IN:
+babel.config.js
+Add:
+module.exports = {
+  presets: ["module:metro-react-native-babel-preset"],
+  plugins: [
+    [
+      "module:react-native-dotenv",
+      {
+        moduleName: "@env",
+        path: ".env",
+      },
+    ],
+  ],
+};
+
+
+
+
+
+API_URL=http://192.168.1.5:5000/api
+SOCKET_URL=http://192.168.1.5:5000
+
+
+
+
+How to use it
+import { API_URL, SOCKET_URL } from "@env";
+
+
+
+
+const xhr = new XMLHttpRequest();
+
+xhr.open("POST", `${API_URL}/chat/upload`);
 
 

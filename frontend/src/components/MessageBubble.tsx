@@ -51,10 +51,27 @@ const MessageBubble = ({ msg, user }: Props) => {
         )}
 
         {/* PROGRESS SECTION IN PROGRESS */}
-        {msg.status === "sending" && (
-          <View style={{ marginTop: 5 }}>
-            <Text style={{ fontSize: 12, opacity: 0.6 }}>
-              Sending... {msg.progress || 0}%
+        {/* UPLOADING */}
+        {msg.status === "uploading" && (
+          <View style={{ marginBottom: 2 }}>
+            <Text style={styles.progress}>
+              Uploading... {msg.progress || 0}%
+            </Text>
+          </View>
+        )}
+        {/* PROCESSING */}
+        {msg.status === "processing" && (
+          <View style={{ marginBottom: 2 }}>
+            <Text style={styles.progress}>
+              Processing media...
+            </Text>
+          </View>
+        )}
+        {/* FAILED */}
+        {msg.status === "failed" && (
+          <View style={{ marginBottom: 2 }}>
+            <Text style={{ fontSize: 15, color: "red"}}>
+              Failed to send
             </Text>
           </View>
         )}

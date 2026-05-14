@@ -1,8 +1,11 @@
 const mongoose = require("mongoose");
+const streamifier = require("streamifier");
+const fs = require("fs");
 const conversationModel = require("../model/conversationModel");
 const messageModel = require("../model/messageModel");
 const cloudinary = require("../lib/cloudinary");
 const usersModel = require("../model/usersModel");
+
 
 
 
@@ -220,154 +223,130 @@ const getMessages = async (req, res) => {
 
 
 
-
-
-// const uploadMedia = async (req, res) => {
-//   try {
-//     // Check file exists
-//     if (!req.file) {
-//       return res.status(400).json({ message: "No file uploaded" });
-//     }
-
-//     const file = req.file;
-
-//     // Validate file type (🔥 MUST be here)
-//     const allowedTypes = [
-//         "image/jpeg",
-//         "image/png",
-//         "video/mp4",
-//         "application/pdf",
-//         "application/msword", 
-//         "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
-
-//         "application/vnd.ms-excel", // .xls
-//         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
-
-//         "text/plain", // .txt
-//     ];
-
-//     if (!allowedTypes.includes(file.mimetype)) {
-//       return res.status(400).json({ message: "Invalid file type" });
-//     }
-
-//     // Upload to Cloudinary
-//     const result = await new Promise((resolve, reject) => {
-//       const stream = cloudinary.uploader.upload_stream(
-//         {
-//           resource_type: "auto",
-//           // Folder structure (VERY IMPORTANT)
-//           folder: `daycare/${req.user.daycareId}/chat/${req.user.id}`,
-//           //Optimization
-//           quality: "auto",
-//           fetch_format: "auto",
-//           //Resize (prevents huge images)
-//           width: 800,
-//           crop: "limit",
-//         },
-//         (error, result) => {
-//           if (error) reject(error);
-//           else resolve(result);
-//         }
-//       );
-
-//       stream.end(file.buffer);
-//     });
-
-//     //  Return structured media object
-//     res.json({
-//       url: result.secure_url,
-//       fileName: file.originalname,
-//       fileType: file.mimetype,
-//       fileSize: file.size,
-//     });
-
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// };
-
-
-
-
-
-
 const uploadMedia = async (req, res) => {
   try {
+
     if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+      return res.status(400).json({
+        error: true,
+        message: "No file uploaded",
+      });
     }
 
     const file = req.file;
-
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-
-      "video/mp4",
-      "video/quicktime",
-
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-
-      "text/plain",
-    ];
-
-    if (!allowedTypes.includes(file.mimetype)) {
-      return res.status(400).json({ message: "Invalid file type" });
-    }
-
-    // Detect file category
     const isImage = file.mimetype.startsWith("image/");
     const isVideo = file.mimetype.startsWith("video/");
+    const resourceType = isVideo
+      ? "video"
+      : isImage
+      ? "image"
+      : "raw";
 
-    const resourceType = isImage || isVideo ? "auto" : "raw";
+    // =========================
+    // VIDEO UPLOAD
+    // =========================
 
-    const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
+    // if (isVideo) {
+    //   const result = await new Promise(
+    //     (resolve, reject) => {
+    //       const stream = cloudinary.uploader.upload_stream(
+    //           {
+    //             resource_type: "video",
+    //             folder: `daycare/${req.user.daycareId}/chat/${req.user._id}`,
+    //           },
+    //           (error, result) => {
+    //             if (error) {
+    //               console.log("CLOUDINARY VIDEO ERROR:", error);
+    //               return reject(error);
+    //             }
+    //             resolve(result);
+    //           }
+    //         );
+
+    //       streamifier
+    //         .createReadStream(file.buffer)
+    //         .pipe(stream);
+    //     }
+    //   );
+
+    //   return res.json({
+    //     url: result.secure_url,
+    //     fileName: file.originalname,
+    //     fileType: file.mimetype,
+    //     fileSize: file.size,
+    //   });
+    // }
+
+   
+    if (isVideo) {
+
+      const result = await cloudinary.uploader.upload(
+        file.path,
         {
-          resource_type: resourceType,
-
+          resource_type: "video",
           folder: `daycare/${req.user.daycareId}/chat/${req.user._id}`,
-
-          // ONLY optimize images/videos (NOT documents)
-          ...(isImage || isVideo
-            ? {
-                quality: "auto",
-                fetch_format: "auto",
-                width: 800,
-                crop: "limit",
-              }
-            : {}),
-        },
-        (error, result) => {
-          if (error) {
-            console.error("CLOUDINARY ERROR:", error);
-            return reject(error);
-          }
-          resolve(result);
         }
       );
 
-      stream.end(file.buffer);
-    });
+      // delete temp file
+      if (fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
 
-    return res.status(200).json({
+      return res.json({
+        url: result.secure_url,
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        fileSize: file.size,
+      });
+    }
+
+    // =========================
+    // IMAGE / DOCUMENT
+    // =========================
+    const result = await new Promise(
+      (resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            {
+              resource_type: resourceType,
+
+              folder: `daycare/${req.user.daycareId}/chat/${req.user._id}`,
+              ...(isImage
+                ? {
+                    quality: "auto",
+                    fetch_format: "auto",
+                    width: 1200,
+                    crop: "limit",
+                  }
+                : {}),
+            },
+            (error, result) => {
+              if (error) {
+                console.log( "CLOUDINARY ERROR:", error);
+                return reject(error);
+              }
+              resolve(result);
+            }
+          );
+
+        streamifier
+          .createReadStream(file.buffer)
+          .pipe(stream);
+      }
+    );
+
+    return res.json({
       url: result.secure_url,
       fileName: file.originalname,
       fileType: file.mimetype,
       fileSize: file.size,
     });
-  } catch (err) {
-    console.error("UPLOAD MEDIA ERROR:", err);
 
+  } catch (error) {
+    console.log("UPLOAD MEDIA ERROR:",error);
     return res.status(500).json({
-      message: "Upload failed",
-      error: err.message,
+      error: true,
+      message: error.message || "Upload failed",
     });
   }
 };
