@@ -178,6 +178,15 @@ export type AttendanceState = {
 // =========================
 // CHAT MESSAGE
 // =========================
+type Media = {
+  url?: string;        // server
+  localUri?: string;   // before upload
+  remoteUri?: string;  // after upload
+  fileName?: string;
+  fileType?: string;
+  fileSize?: number;
+};
+
 export type Message = {
   _id: string;
   conversationId: string;
@@ -193,20 +202,15 @@ export type Message = {
   text?: string;
 
 
-  media?: {
-    url: string;
-    fileName?: string;
-    fileType?: string;
-    fileSize?: number;
-  };
+  media?: Media;
 
   contact?: {
     name: string;
     phone: string;
   };
 
-  status?: "sent" | "delivered" | "read" | "uploading"  | "processing" | "failed";
-
+  status?: "sent" | "delivered" | "read" | "uploading"  | "processing" | "failed" | "viewed" | "sending";
+            
   progress?: number;
 
   tempId?: string;

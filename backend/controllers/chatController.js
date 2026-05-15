@@ -5,6 +5,7 @@ const conversationModel = require("../model/conversationModel");
 const messageModel = require("../model/messageModel");
 const cloudinary = require("../lib/cloudinary");
 const usersModel = require("../model/usersModel");
+const { io, onlineUsers } = require("../server");
 
 
 
@@ -58,7 +59,6 @@ const sendMessage = async (req, res) => {
     if (!receiverId || !messageType) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-
     const convo = await getOrCreateConversation(req.user._id, receiverId);
 
     const message = await messageModel.create({
@@ -66,10 +66,23 @@ const sendMessage = async (req, res) => {
       sender: req.user.id,
       messageType,
       text: messageType === "text" ? text : undefined,
+      status: "sent",
       media: ["image", "video", "document"].includes(messageType)
         ? media
         : undefined,
     });
+
+    // REAL TIME HANDSHAKE
+    const senderSocketId = onlineUsers.get(
+      message.sender.toString()
+    );
+    if (senderSocketId) {
+      io.to(senderSocketId).emit( "message_delivered", {
+          messageId: message._id,
+        }
+      );
+    }
+
 
     convo.lastMessage = message._id;
     convo.lastMessageAt = new Date();
@@ -304,36 +317,56 @@ const uploadMedia = async (req, res) => {
     // =========================
     // IMAGE / DOCUMENT
     // =========================
-    const result = await new Promise(
-      (resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-            {
-              resource_type: resourceType,
+    // const result = await new Promise(
+    //   (resolve, reject) => {
+    //     const stream = cloudinary.uploader.upload_stream(
+    //         {
+    //           resource_type: resourceType,
 
-              folder: `daycare/${req.user.daycareId}/chat/${req.user._id}`,
-              ...(isImage
-                ? {
-                    quality: "auto",
-                    fetch_format: "auto",
-                    width: 1200,
-                    crop: "limit",
-                  }
-                : {}),
-            },
-            (error, result) => {
-              if (error) {
-                console.log( "CLOUDINARY ERROR:", error);
-                return reject(error);
-              }
-              resolve(result);
+    //           folder: `daycare/${req.user.daycareId}/chat/${req.user._id}`,
+    //           ...(isImage
+    //             ? {
+    //                 quality: "auto",
+    //                 fetch_format: "auto",
+    //                 width: 1200,
+    //                 crop: "limit",
+    //               }
+    //             : {}),
+    //         },
+    //         (error, result) => {
+    //           if (error) {
+    //             console.log( "CLOUDINARY ERROR:", error);
+    //             return reject(error);
+    //           }
+    //           resolve(result);
+    //         }
+    //       );
+
+    //     streamifier
+    //       .createReadStream(file.buffer)
+    //       .pipe(stream);
+    //   }
+    // );
+
+    const result = await cloudinary.uploader.upload(file.path, {
+        resource_type: resourceType,
+
+        folder: `daycare/${req.user.daycareId}/chat/${req.user._id}`,
+
+        ...(isImage
+          ? {
+              quality: "auto",
+              fetch_format: "auto",
+              width: 1200,
+              crop: "limit",
             }
-          );
+          : {}),
+    });
 
-        streamifier
-          .createReadStream(file.buffer)
-          .pipe(stream);
-      }
-    );
+    // delete temp file
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
 
     return res.json({
       url: result.secure_url,

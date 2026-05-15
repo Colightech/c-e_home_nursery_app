@@ -80,15 +80,29 @@ io.on("connection", (socket) => {
   });
 
   // Send message event
-  socket.on("sendMessage", (data) => {
+  socket.on("send_message", (data) => {
     const { receiverId } = data;
 
     const receiverSocketId = onlineUsers.get(receiverId);
 
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("getMessage", data);
+      io.to(receiverSocketId).emit("receive_message", data);
     }
   });
+
+
+
+  socket.on("message_viewed", async ({ messageId, senderId }) => {
+    const senderSocketId = onlineUsers.get(senderId);
+
+    if (senderSocketId) {
+      io.to(senderSocketId).emit(
+        "message_viewed",
+        { messageId }
+      );
+    }
+  });
+
 
   // Typing indicator (optional but real-world standard)
   socket.on("typing", ({ receiverId }) => {
@@ -140,3 +154,9 @@ const runServer = async () => {
 };
 
 runServer();
+
+
+module.exports = {
+  io,
+  onlineUsers,
+};

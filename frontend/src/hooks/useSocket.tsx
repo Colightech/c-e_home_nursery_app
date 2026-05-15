@@ -10,7 +10,7 @@ const useSocket = (userId: string) => {
 
     socket.connect();
 
-    socket.emit("join", userId);
+    socket.emit("addUser", userId);
 
     socket.on("connect", () => {
       useChatStore.getState().flushQueue();

@@ -82,20 +82,36 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
+    previewContainer: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "black",
+        zIndex: 9999,       
+    },
+    closePreview: {
+        position: "absolute",
+        top: 10,
+        right: 30,
+        zIndex: 10000, 
+        backgroundColor: "black",
+        width: 40,
+        height: 40,
+        borderRadius: 50,
+    },
+    closePreviewBtn: { 
+        color: "white", fontSize: 18,
+        textAlign: "center",
+        marginTop: 7,
+    },
 
 
 
 
 
     //Message Bubble
-    time: {
-        flexDirection: "row",
-        textAlign: "right",
-       
-        fontSize: 12,
-        fontWeight: "600",
-        color: "grey"
-    },
     bubble: {
         
     },
@@ -121,6 +137,34 @@ const styles = StyleSheet.create({
         width: 250,
         height: 300,
         borderRadius: 10,
+    },
+    retry: { 
+        color: "#fff", 
+        fontSize: 18,
+        fontWeight: "600",
+        backgroundColor: "black",
+        opacity: 0.7,
+        position: "absolute",
+        top: -130,
+        right: 70,
+        padding: 10,
+        width: 80,
+        textAlign: "center",
+        zIndex: 50,
+        borderRadius: 10,
+    },
+    timeAndStatus: {
+        flexDirection: "row",
+        gap: 5,
+        alignItems: "center",
+        justifyContent: "flex-end"
+    },
+    time: {
+        flexDirection: "row",
+        textAlign: "right",
+        fontSize: 12,
+        fontWeight: "600",
+        color: "grey"
     },
 })
 

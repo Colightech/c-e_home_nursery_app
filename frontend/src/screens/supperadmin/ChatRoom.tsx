@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
-import { View, TextInput, TouchableOpacity, FlatList, Text, ScrollView, ImageBackground} from "react-native";
+import { View, TextInput, TouchableOpacity, Image, Text, ScrollView, ImageBackground} from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation/types";
@@ -16,19 +16,24 @@ import useSocket from "../../hooks/useSocket";
 import MessageBubble from "../../components/MessageBubble";
 import Avatar from "../../components/Avater";
 import  requestMediaPermission  from "../../utils/requestMediaPermission";
+import Video from "react-native-video";
 
 
-type NavigationProp =
-  NativeStackNavigationProp<
+type NavigationProp = NativeStackNavigationProp<
     RootStackParamList,
     "chatroom"
   >;
 
-type ChatRouteProp =
-  RouteProp<
+type ChatRouteProp = RouteProp<
     RootStackParamList,
     "chatroom"
   >;
+
+    type ViewerState = {
+    uri: string;
+    type: any["messageType"];
+  };
+
 
 const ChatRoom = () => {
 
@@ -41,6 +46,9 @@ const ChatRoom = () => {
 
   const [text, setText] = useState("");
   const [showAttachments, setShowAttachments] = useState<boolean>(false);
+  const [viewer, setViewer] = useState<ViewerState | null>(null);
+
+ 
 
   // ANIMATED VALUES
   const slideAnim = useRef( new Animated.Value(300)).current;
@@ -62,9 +70,6 @@ const ChatRoom = () => {
   // console.log("USER IN CHAT ROOM:", user);
 
 
-  useSocket(user?._id || "");
-
-
   useEffect(() => {
     // clear old messages first
     useChatStore.setState({
@@ -74,6 +79,8 @@ const ChatRoom = () => {
     getMessages(conversationId);
   }, [conversationId]);
 
+
+  useSocket(user?._id || "");
 
 
   //SOCKET LISTENERS
@@ -85,15 +92,22 @@ const ChatRoom = () => {
       useChatStore.setState((state: any) => ({
         messages: [...state.messages, message],
       }));
-
     });
 
 
-    socket.on("message_read_update", ({ messageId }) => {
+    socket.on("message_viewed", ({ messageId }) => {
       useChatStore.setState((state: any) => ({
-        messages: state.messages.map((msg: any) => msg._id === messageId ? { ...msg, status: "read" } : msg ),
+        messages: state.messages.map((msg: any) =>
+          msg._id === messageId
+            ? {
+                ...msg,
+                status: "viewed",
+              }
+            : msg
+        ),
       }));
     });
+
 
     return () => {
       socket.off("receive_message");
@@ -114,23 +128,25 @@ const ChatRoom = () => {
 
 
 
+  useEffect(() => {
+      useChatStore.getState().restoreQueue();
+  }, []);
 
 
 
+  
   const handlePickDocument = async () => {
 
-    setShowAttachments(false);
-
     try {
+      setShowAttachments(false);
 
-      const hasPermission = await requestMediaPermission("document");
-
+      const hasPermission = await requestMediaPermission( "document");
       if (!hasPermission) {
-        console.log("DOCUMENT PERMISSION DENIED");
+        console.log( "DOCUMENT PERMISSION DENIED");
         return;
       }
 
-      console.log("OPENING DOCUMENT PICKER");
+      console.log( "OPENING DOCUMENT PICKER");
 
       const [file] = await pick({
         allowMultiSelection: false,
@@ -144,11 +160,11 @@ const ChatRoom = () => {
         ],
       });
 
-      console.log("PICKED FILE:", file);
-
       if (!file) return;
 
+      console.log("PICKED FILE:", file);
 
+      //TEMP MESSAGE
       const tempId = Date.now().toString();
       const tempMessage = {
         _id: tempId,
@@ -156,52 +172,77 @@ const ChatRoom = () => {
         sender: user,
         messageType: "document",
         text: file.name,
-        media: null,
-        status: "sending",
+        media: {
+          localUri: file.uri,
+          remoteUri: null,
+        },
+        retryData: file,
+        status: "uploading",
         progress: 0,
         createdAt: new Date().toISOString(),
       };
 
-      console.log("handlePickDocument: tempMessage", tempMessage);
+      console.log( "handlePickDocument tempMessage:",  tempMessage);
 
+      //INSTANT UI
       useChatStore.setState((state: any) => ({
-        messages: [...state.messages, tempMessage],
+        messages: [ ...state.messages, tempMessage],
       }));
 
-
-      console.log("handlePickDocument: before uploadedFile");
-      const uploadedFile = await uploadMedia(file, (percent: any) => {
+      //UPLOAD FILE
+      const uploadedFile = await uploadMedia(file, (percent: number) => {
         useChatStore.setState((state: any) => ({
           messages: state.messages.map((m: any) =>
-            m._id === tempId
-              ? { ...m, progress: percent }
-              : m
-          ),
+              m._id === tempId
+                ? {
+                    ...m,
+                    progress: percent,
+                    status:
+                      percent >= 100
+                        ? "processing"
+                        : "uploading",
+                  }
+                : m
+            ),
         }));
       });
 
-      console.log("handlePickDocument: uploadedFile:", uploadedFile);
+      console.log("handlePickDocument uploadedFile:", uploadedFile);
 
-      if (!uploadedFile) return;
+      //FAILED UPLOAD
+      if (!uploadedFile) {
+        useChatStore.setState((state: any) => ({
+          messages: state.messages.map((m: any) =>
+              m._id === tempId
+                ? {
+                    ...m,
+                    status: "failed",
+                  }
 
+                : m
+            ),
+        }));
+        return;
+      }
 
-      // const res = await sendMessage({
-      //   conversationId,
-      //   receiverId,
+      //UPDATE LOCAL MESSAGE
+      useChatStore.setState((state: any) => ({
+        messages: state.messages.map((m: any) =>
+            m._id === tempId
+              ? {
+                  ...m,
+                  media: {
+                    localUri: file.uri,
+                    remoteUri: uploadedFile.url,
+                  },
+                  progress: 100,
+                  status: "sending",
+                }
+              : m
+          ),
+      }));
 
-      //   text: uploadedFile.fileName,
-
-      //   messageType: "document",
-
-      //   media: {
-      //     url: uploadedFile.url,
-      //     fileName: uploadedFile.fileName,
-      //     fileType: uploadedFile.fileType,
-      //     fileSize: uploadedFile.fileSize,
-      //   },
-      // });
-
-
+      //SEND TO DATABASE
       const res = await sendMessage({
         conversationId,
         receiverId,
@@ -213,116 +254,437 @@ const ChatRoom = () => {
 
       console.log("DOCUMENT MESSAGE RESPONSE:", res);
 
-      if (!conversationId &&
-        res?.conversationId) {
+      //FAILED SEND
+      if (!res) {
+        useChatStore.setState((state: any) => ({
+          messages: state.messages.map((m: any) =>
+              m._id === tempId
+                ? {
+                    ...m,
+                    status: "failed",
+                  }
+                : m
+            ),
+        }));
+        return;
+      }
 
-        setConversationId(
-          res.conversationId
-        );
+      //NEW CONVERSATION
+      if (!conversationId && res?.conversationId) {
+        setConversationId( res.conversationId);
       }
 
     } catch (error) {
-
-      console.log(
-        "DOCUMENT PICK ERROR:",
-        JSON.stringify(error, null, 2)
-      );
+      console.log( "DOCUMENT PICK ERROR:", error);
     }
   };
+
+
+
+  // const handlePickDocument = async () => {
+
+  //   setShowAttachments(false);
+
+  //   try {
+
+  //     const hasPermission = await requestMediaPermission("document");
+
+  //     if (!hasPermission) {
+  //       console.log("DOCUMENT PERMISSION DENIED");
+  //       return;
+  //     }
+
+  //     console.log("OPENING DOCUMENT PICKER");
+
+  //     const [file] = await pick({
+  //       allowMultiSelection: false,
+  //       type: [
+  //         "application/pdf",
+  //         "application/msword",
+  //         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  //         "application/vnd.ms-excel",
+  //         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  //         "text/plain",
+  //       ],
+  //     });
+
+  //     console.log("PICKED FILE:", file);
+
+  //     if (!file) return;
+
+
+  //     const tempId = Date.now().toString();
+  //     const tempMessage = {
+  //       _id: tempId,
+  //       conversationId,
+  //       sender: user,
+  //       messageType: "document",
+  //       text: file.name,
+  //       media: null,
+  //       status: "sending",
+  //       progress: 0,
+  //       createdAt: new Date().toISOString(),
+  //     };
+
+  //     console.log("handlePickDocument: tempMessage", tempMessage);
+
+  //     useChatStore.setState((state: any) => ({
+  //       messages: [...state.messages, tempMessage],
+  //     }));
+
+
+  //     console.log("handlePickDocument: before uploadedFile");
+  //     const uploadedFile = await uploadMedia(file, (percent: any) => {
+  //       useChatStore.setState((state: any) => ({
+  //         messages: state.messages.map((m: any) =>
+  //           m._id === tempId
+  //             ? { ...m, progress: percent }
+  //             : m
+  //         ),
+  //       }));
+  //     });
+
+  //     console.log("handlePickDocument: uploadedFile:", uploadedFile);
+
+  //     if (!uploadedFile) return;
+
+
+  //     // const res = await sendMessage({
+  //     //   conversationId,
+  //     //   receiverId,
+
+  //     //   text: uploadedFile.fileName,
+
+  //     //   messageType: "document",
+
+  //     //   media: {
+  //     //     url: uploadedFile.url,
+  //     //     fileName: uploadedFile.fileName,
+  //     //     fileType: uploadedFile.fileType,
+  //     //     fileSize: uploadedFile.fileSize,
+  //     //   },
+  //     // });
+
+
+  //     const res = await sendMessage({
+  //       conversationId,
+  //       receiverId,
+  //       text: file.name,
+  //       messageType: "document",
+  //       media: uploadedFile,
+  //       tempId,
+  //     });
+
+  //     console.log("DOCUMENT MESSAGE RESPONSE:", res);
+
+  //     if (!conversationId &&
+  //       res?.conversationId) {
+
+  //       setConversationId(
+  //         res.conversationId
+  //       );
+  //     }
+
+  //   } catch (error) {
+
+  //     console.log(
+  //       "DOCUMENT PICK ERROR:",
+  //       JSON.stringify(error, null, 2)
+  //     );
+  //   }
+  // };
+
 
 
 
 
 
   const handlePickImage = async () => {
-     console.log("handlePickImage was call");
+    console.log("handlePickImage was called");
     try {
+
       const hasPermission = await requestMediaPermission();
       if (!hasPermission) return;
 
       setShowAttachments(false);
 
       const result = await launchImageLibrary({
-        mediaType: "mixed",
-        quality: 0.8,
-        selectionLimit: 1,
-      });
+          mediaType: "mixed",
+          quality: 0.8,
+          selectionLimit: 1,
+        });
 
       const asset = result.assets?.[0];
+
       if (!asset) return;
 
+      const isVideo = asset.type?.startsWith("video");
+
+      //CREATE TEPORARY MESSAGE
       const tempId = Date.now().toString();
       const tempMessage = {
         _id: tempId,
         conversationId,
         sender: user,
-        messageType: asset.type?.startsWith("video") ? "video" : "image",
+        messageType: isVideo ? "video" : "image",
         text: "",
-        media: { url: asset.uri },
+        media: {
+          localUri: asset.uri,
+          remoteUri: null,
+        },
+        retryData: asset,
         status: "sending",
         progress: 0,
-        createdAt: new Date().toISOString(),
-      }
+        createdAt:
+          new Date().toISOString(),
+      };
 
-       console.log("handlePickImage: after tempMessage", tempMessage);
+      console.log( "handlePickImage: tempMessage", tempMessage);
 
-      // 1. Instant UI
+      //INSTANT UI
       useChatStore.setState((state: any) => ({
-        messages: [ ...state.messages, tempMessage ],
+        messages: [...state.messages, tempMessage],
       }));
 
-       console.log("handlePickImage: before uploadedFile");
-
-      // 2. Upload
-      const uploadedFile = await uploadMedia(asset, (percent: number) => {
+      //UPLOAD MEDIA
+      const uploadedFile = await uploadMedia( asset, (percent: number) => {
         useChatStore.setState((state: any) => ({
-          messages: state.messages.map((m: any) =>
-            m._id === tempId
-              ? {
-                  ...m,
-                  progress: percent,
-                  status: percent === 100
-                    ? "processing"
-                    : "uploading",
-                }
-              : m
-          ),
+          messages: state.messages.map((m: any)  =>
+              m._id === tempId
+                ? {
+                    ...m,
+                    progress: percent,
+                    status: percent >= 100
+                        ? "processing"
+                        : "sending",
+                  }
+                : m
+            ),
         }));
       });
 
+      console.log("handlePickImage: uploadedFile", uploadedFile);
+      
+      //FAILED UPLOAD
+      if (!uploadedFile) {
+        useChatStore.setState((state: any) => ({
+          messages: state.messages.map((m: any) =>
+              m._id === tempId
+                ? {
+                    ...m,
+                    status: "failed",
+                  }
+                : m
+            ),
+        }));
+        return;
+      }
 
-      console.log("handlePickImage: after uploadedFile", uploadedFile);
+      // UPDATE TEMP MESSAGE
+      useChatStore.setState((state: any) => ({
+        messages: state.messages.map((m: any) =>
+            m._id === tempId
+              ? {
+                  ...m,
+                  media: {
+                    localUri: asset.uri,
+                    remoteUri: uploadedFile.url,
+                  },
+                  progress: 100,
+                  status: "sending",
+                }
+              : m
+          ),
+      }));
 
-      if (!uploadedFile) return;
-
-      // 3. Send to DB
+      // SEND MESSAGE TO DATABASE
       const res = await sendMessage({
         conversationId,
         receiverId,
         text: "",
-        messageType: asset.type?.startsWith("video") ? "video" : "image",
+        messageType:
+          isVideo ? "video" : "image",
         media: uploadedFile,
         tempId,
       });
 
-      console.log("handlePickImage: after sendMessage", res);
+      console.log("handlePickImage: sendMessage", res);
 
-      if (!conversationId && res?.conversationId) {
-        setConversationId( res.conversationId );
+    //  FAILED DB SEND
+      if (!res) {
+        useChatStore.setState((state: any) => ({
+          messages: state.messages.map((m: any) =>
+              m._id === tempId
+                ? {
+                    ...m,
+                    status: "failed",
+                  }
+                : m
+            ),
+        }));
+        return;
       }
 
-    } catch (err) {
-      console.log("IMAGE ERROR:", err);
+      // NEW CONVERSATION
+      if (!conversationId && res?.conversationId) {
+        setConversationId(res.conversationId);
+      }
+    } catch (error) {
+      console.log("HANDLE IMAGE ERROR:",  error);
     }
   };
 
 
 
+    // const handlePickImage = async () => {
+  //    console.log("handlePickImage was call");
+  //   try {
+  //     const hasPermission = await requestMediaPermission();
+  //     if (!hasPermission) return;
+
+  //     setShowAttachments(false);
+
+  //     const result = await launchImageLibrary({
+  //       mediaType: "mixed",
+  //       quality: 0.8,
+  //       selectionLimit: 1,
+  //     });
+
+  //     const asset = result.assets?.[0];
+  //     if (!asset) return;
+
+  //     const tempId = Date.now().toString();
+  //     const tempMessage = {
+  //       _id: tempId,
+  //       conversationId,
+  //       sender: user,
+  //       messageType: asset.type?.startsWith("video") ? "video" : "image",
+  //       text: "",
+  //       media: { url: asset.uri },
+  //       status: "sending",
+  //       progress: 0,
+  //       createdAt: new Date().toISOString(),
+  //     }
+
+  //      console.log("handlePickImage: after tempMessage", tempMessage);
+
+  //     // 1. Instant UI
+  //     useChatStore.setState((state: any) => ({
+  //       messages: [ ...state.messages, tempMessage ],
+  //     }));
+
+  //      console.log("handlePickImage: before uploadedFile");
+
+  //     // 2. Upload
+  //     const uploadedFile = await uploadMedia(asset, (percent: number) => {
+  //       useChatStore.setState((state: any) => ({
+  //         messages: state.messages.map((m: any) =>
+  //           m._id === tempId
+  //             ? {
+  //                 ...m,
+  //                 progress: percent,
+  //                 status: percent === 100
+  //                   ? "processing"
+  //                   : "uploading",
+  //               }
+  //             : m
+  //         ),
+  //       }));
+  //     });
 
 
-  const handleOpenCamera = () => {
+  //     console.log("handlePickImage: after uploadedFile", uploadedFile);
 
-  }
+  //     if (!uploadedFile) return;
+
+  //     // 3. Send to DB
+  //     const res = await sendMessage({
+  //       conversationId,
+  //       receiverId,
+  //       text: "",
+  //       messageType: asset.type?.startsWith("video") ? "video" : "image",
+  //       media: uploadedFile,
+  //       tempId,
+  //     });
+
+  //     console.log("handlePickImage: after sendMessage", res);
+
+  //     if (!conversationId && res?.conversationId) {
+  //       setConversationId( res.conversationId );
+  //     }
+
+  //   } catch (err) {
+  //     console.log("IMAGE ERROR:", err);
+  //   }
+  // };
+
+
+
+  const handleOpenCamera = () => {}
+
+
+
+  // Retry Function 
+  const retryMessage = async (msg: any) => {
+    useChatStore.setState((state: any) => ({
+      messages: state.messages.map((m: any) =>
+        m._id === msg._id
+          ? {
+              ...m,
+              status: "uploading",
+              progress: 0,
+            }
+          : m
+      ),
+    }));
+
+    const uploadedFile = await uploadMedia(msg.retryData, (percent: any) => {
+      useChatStore.setState((state: any) => ({
+        messages: state.messages.map((m: any) =>
+          m._id === msg._id
+            ? {
+                ...m,
+                progress: percent,
+              }
+            : m
+        ),
+      }));
+    });
+
+    if (!uploadedFile) {
+      useChatStore.setState((state: any) => ({
+        messages: state.messages.map((m: any) =>
+          m._id === msg._id
+            ? {
+                ...m,
+                status: "failed",
+              }
+            : m
+        ),
+      }));
+      return;
+    }
+
+    await sendMessage({
+      conversationId: msg.conversationId,
+      receiverId,
+      text: msg.text,
+      messageType: msg.messageType,
+      media: uploadedFile,
+      tempId: msg._id,
+    });
+  };
+
+
+
+  const openViewer = (msg: any) => {
+    const uri = msg.media?.remoteUri || msg.media?.localUri || msg.media?.url;
+    if (!uri) return;
+    setViewer({
+      uri,
+      type: msg.messageType,
+    });
+  };
 
 
 
@@ -346,6 +708,37 @@ const ChatRoom = () => {
         </View>
       </View>
 
+      {/* IMAGE PREVIEW SECTION */}
+      {viewer && (
+        <View
+          style={styles.previewContainer}
+        >
+          <TouchableOpacity
+            onPress={() => setViewer(null)}
+            style={styles.closePreview}
+          >
+            <Text style={styles.closePreviewBtn}>✕</Text>
+          </TouchableOpacity>
+
+          {viewer.type === "image" && (
+            <Image
+              source={{ uri: viewer.uri }}
+              style={{ width: "100%", height: "100%" }}
+              resizeMode="contain"
+            />
+          )}
+
+          {viewer.type === "video" && (
+            <Video
+              source={{ uri: viewer.uri }}
+              style={{ width: "100%", height: "100%" }}
+              controls
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      )}
+
      
       {/* MESSAGES */}
       <ImageBackground style={{ flex: 1,}}
@@ -360,7 +753,13 @@ const ChatRoom = () => {
         >
         {
           messages.map((i: any, index: any) => (
-            <MessageBubble msg={i} user={user} key={index} />
+            <MessageBubble 
+              msg={i} 
+              user={user} 
+              key={index} 
+              retryMessage={retryMessage}
+              openViewer={openViewer}
+            />
           ))
         }
         </ScrollView>
