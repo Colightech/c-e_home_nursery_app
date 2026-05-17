@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import {View, TouchableOpacity, Text, TextInput, ScrollView,} from "react-native";
+import {View, TouchableOpacity, Text, TextInput, ScrollView, Pressable} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -117,10 +117,16 @@ const ChatListScreen = () => {
             search.trim() === "" && (
               <View>
                 {chatUsers.map((item: any) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={item._id}
                     onPress={() => openChat(item)}
-                    style={styles.chatsItemContainer}
+                    style={({ pressed }) => [
+                      styles.chatsItemContainer,
+                      pressed && {
+                        backgroundColor: "#aaa", 
+                        opacity: 0.7,
+                      },
+                    ]}
                   >
                     <Avatar
                       imageUrl={item.profilePicture}
@@ -134,7 +140,7 @@ const ChatListScreen = () => {
                         {item.role}
                       </Text>
                     </View>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
             )
