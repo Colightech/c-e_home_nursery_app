@@ -16,64 +16,134 @@ const useAuthStore = create<AuthState>()(
       success: null,
 
 
-      // LOGIN
-      login: async (email, password) => {
-        set({ loading: true, error: null });
-        try {
-          const res = await axiosInstance.post("/auth/login", { email, password });
-          set({ 
-            user: res.data, 
-            loading: false,
-            success: "Login successfully",
-          });
-          return res.data;
-        } catch (error) {
-          const message = axios.isAxiosError(error)
-            ? error.response?.data?.message || error.message
-            : "Something went wrong";
-          set({ error: message, loading: false });
-          return { error: true, message };
-        }
-      },
+    // LOGIN
+    // login: async (email, password) => {
+    //   set({ loading: true, error: null });
+    //   try {
+    //     const res = await axiosInstance.post("/auth/login", { email, password });
+    //      console.log("res response in useAuthStore", res);
+    //     set({ 
+    //       user: res.data, 
+    //       loading: false,
+    //       success: "Login successfully",
+    //     });
+    //     return res.data;
+    //   } catch (error) {
+    //     const message = axios.isAxiosError(error)
+    //       ? error.response?.data?.message || error.message
+    //       : "Something went wrong";
+    //     set({ error: message, loading: false });
+    //     return { error: true, message };
+    //   }
+    // },
 
 
-      register: async (data) => {
-        set({ loading: true, error: null });
+    login: async (email, password) => {
+      set({ loading: true, error: null, success: null});
 
-        try {
-          const res = await axiosInstance.post("/auth/register", data);
+      try {
+        await axiosInstance.post("/auth/login",{email, password});
 
-          set({ 
-            loading: false,
-            success: "User created successfully",
-           });
-          return res.data;
+        // FETCH REAL USER
+        const me = await axiosInstance.get("/auth/me");
+        const user = me.data.data;
 
-        } catch (error) {
-          const message = axios.isAxiosError(error)
-            ? error.response?.data?.message || error.message
-            : "Something went wrong";
+        set({ user, loading: false, success: "Login successful"});
+        return user;
 
-          set({ error: message, loading: false, success: null });
-          return { error: true, message };
-        }
-      },
+      } catch (error) {
+        const message = axios.isAxiosError(error)
+          ? error.response?.data?.message ||
+            error.message
+          : "Something went wrong";
+
+        set({loading: false, error: message});
+        return {error: true, message};
+      }
+    },
+
+
+    // register: async (data) => {
+    //   set({ loading: true, error: null });
+
+    //   try {
+    //     const res = await axiosInstance.post("/auth/register", data);
+
+    //     set({ 
+    //       loading: false,
+    //       success: "User created successfully",
+    //       });
+    //     return res.data;
+
+    //   } catch (error) {
+    //     const message = axios.isAxiosError(error)
+    //       ? error.response?.data?.message || error.message
+    //       : "Something went wrong";
+
+    //     set({ error: message, loading: false, success: null });
+    //     return { error: true, message };
+    //   }
+    // },
+
+
+    register: async (data) => {
+      set({loading: true, error: null, success: null});
+
+      try {
+
+        const res = await axiosInstance.post("/auth/register",data);
+        set({
+          success: "User created successfully",
+        });
+
+        return res.data;
+
+      } catch (error) {
+        const message = axios.isAxiosError(error)
+          ? error.response?.data?.message ||
+            error.message
+          : "Something went wrong";
+
+        set({ error: message });
+
+        return {error: true, message};
+      } finally {
+        set({loading: false });
+      }
+    },
+
+
+
+      // checkAuth: async () => {
+      //   try {
+      //       const res = await axiosInstance.get("/auth/me");
+      //       const user = res.data.data;
+      //       set((state) => {
+      //           if (state.user !== user) {
+      //               return { user };
+      //           }
+      //           return state;
+      //       });
+      //       return user;
+      //   } catch (err) {
+      //       set({ user: null });
+      //       return null;
+      //   }
+      // },
 
 
       checkAuth: async () => {
+
         try {
-            const res = await axiosInstance.get("/auth/me");
-            const user = res.data.data;
-            set((state) => {
-                if (state.user !== user) {
-                    return { user };
-                }
-                return state;
-            });
-            return user;
-        } catch (err) {
-            set({ user: null });
-            return null;
+          const res = await axiosInstance.get("/auth/me");
+          const user = res.data.data;
+
+          set({ user });
+          return user;
+
+        } catch (error) {
+          set({ user: null });
+          return null;
         }
       },
 

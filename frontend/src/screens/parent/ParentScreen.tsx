@@ -1,13 +1,119 @@
-import React from 'react'
-import { View, TextInput, Button, Text, TouchableOpacity, ImageBackground, 
-    Image,   KeyboardAvoidingView, ScrollView, Platform, } from "react-native";
+
+
+import React, { useEffect } from "react";
+import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
+import useAdminStore from "../../store/useAdminStore";
+import StatCard from "../../components/StatCard";
+import styles from "../../style/parent/parentScreenStyle"
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../../navigation/types";
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+
+const bottomItems = [
+  {id: 1, label: "Home", icon: (<Ionicons name="home-outline" size={25} color="black" />) },
+  {id: 2, label: "Chat", icon: (<Ionicons name="chatbubble-outline" size={25} color="black" />) },
+  {id: 3, label: "Attendance", icon: (<Ionicons name="school-outline" size={25} color="black" />) },
+]
+
+
 
 const ParentScreen = () => {
-  return (
-    <View>
-     <Text>ParentScreen</Text> 
-    </View>
-  )
-}
 
-export default ParentScreen
+    const fetchStats = useAdminStore((state) => state.fetchStats);
+    const stats = useAdminStore((state) => state.stats);
+    const loading = useAdminStore((state) => state.loading);
+    const error = useAdminStore((state) => state.error);
+
+
+    const navigation = useNavigation<NavigationProp>()
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView style={styles.container}>
+        <View style={styles.appNameContainer}>
+          <Text style={styles.nameTitle}>
+            Home nursery
+          </Text>
+
+          <View style={styles.addAndSettings}>
+            <TouchableOpacity
+              onPress={() => navigation.replace("parentsetting")}
+            >
+              <Ionicons name="settings-outline" size={25} color="black" />
+            </TouchableOpacity>
+          </View>
+
+        </View>
+        
+        <View style={styles.dashboardBox}>
+            <View style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
+                <Text>Wednesday 24 December</Text>
+                <Text>C & E</Text>
+            </View>
+            <View style={{padding: 10}}>
+              <Image
+                source={require("../../assets/plus1.png")}
+                style={{width: 100, height: 100, backgroundColor: "#ddd", borderRadius: 50, display: "flex", alignSelf: "center"}}
+              />
+            </View>
+            <View style={{display: "flex", flexDirection: "row", justifyContent: "space-around"}}>
+                <View>
+                  <Text>1</Text>
+                  <Text>Due</Text>
+                </View>
+                <View></View>
+                <View>
+                    <Text>0</Text>
+                    <Text>Signed in</Text>
+                </View>
+            </View>
+        </View>
+
+        <View style={styles.startCardContainer}>
+          <View style={styles.startCard}><StatCard title="Users" value={stats.users}/></View>
+          <View style={styles.startCard}><StatCard title="Children" value={stats.children} /></View>
+          <View style={styles.startCard}><StatCard title="Caregivers" value={stats.caregiver} /></View>
+          <View style={styles.startCard}><StatCard title="Revenue" value={stats.revenue} /></View>
+        </View>
+      </ScrollView>
+
+      {/* BOTTOM NAVIGATION */}
+      <View style={styles.bottomNavContainer}>
+        {
+          bottomItems.map((item, index) => (
+            <TouchableOpacity 
+              key={index} 
+              style={styles.bottomNavItem}
+              onPress={() => {
+                switch (index) {
+                  case 0:
+                    navigation.replace("ParentHome");
+                    break;
+                  case 1:
+                    navigation.replace("parentchatlist");
+                    break;
+                  case 2:
+                    navigation.replace("parentattendance");
+                    break;
+                }
+              }}
+            >
+                <View style={styles.icon}>{item.icon}</View>
+                <Text>{item.label}</Text>
+            </TouchableOpacity>
+          ))
+        }
+      </View>
+    </View>
+  );
+};
+
+export default ParentScreen;

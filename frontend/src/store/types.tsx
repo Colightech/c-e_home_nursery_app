@@ -5,6 +5,7 @@ export type User = {
   _id: string;
   firstName: string;
   lastName: string;
+  name: string;
   email: string;
   role: "super-admin" | "admin" | "caregiver" | "parent";
   profilePicture?: string;

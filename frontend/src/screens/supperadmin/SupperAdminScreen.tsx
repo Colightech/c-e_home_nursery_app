@@ -112,6 +112,8 @@ const SupperAdminScreen = () => {
                   case 3:
                     navigation.replace("supperattendance");
                     break;
+                  // default:
+                  //   navigation.replace("supperadmin");
                 }
               }}
             >

@@ -34,7 +34,7 @@ const LoginScreen = () => {
   const navigation = useNavigation<NavigationProp>();
 
   const login = useAuthStore((state) => state.login);
-  const user = useAuthStore((state) => state.user);
+   const user = useAuthStore.getState().checkAuth();
   const loading = useAuthStore((state) => state.loading);
   const error = useAuthStore((state) => state.error);
   const success = useAuthStore((state) => state.success);
@@ -50,13 +50,30 @@ const LoginScreen = () => {
   }, [success, error]);
 
 
+  // useEffect(() => {
+  //   const bootstrap = async () => {
+  //     const user = await useAuthStore.getState().checkAuth();
+  //     if (user) {
+  //       redirectByRole(user.role, navigation);
+  //     }
+  //     setCheckingSession(false);
+  //   };
+  //   bootstrap();
+  // }, []);
+
+
   useEffect(() => {
     const bootstrap = async () => {
-      const user = await useAuthStore.getState().checkAuth();
-      if (user) {
-        redirectByRole(user.role, navigation);
+      try {
+        const user = await useAuthStore.getState().checkAuth();
+        if (user?.role) {
+          redirectByRole(user.role, navigation);
+        }
+      } catch (error) {
+        console.log("BOOTSTRAP ERROR:",error);
+      } finally {
+        setCheckingSession(false);
       }
-      setCheckingSession(false);
     };
     bootstrap();
   }, []);
@@ -75,6 +92,7 @@ const LoginScreen = () => {
       if (res?.error) return;
       
       const user = await useAuthStore.getState().checkAuth();
+      console.log("user response in login screen", user);
 
       if (user) {
           redirectByRole(user.role, navigation);

@@ -4,6 +4,7 @@ import { View, Text, Image, TouchableOpacity } from "react-native";
 import styles from "../style/supperadmin/chatRoomStyle";
 import type { Message, User } from "../store/types";
 import Video from "react-native-video";
+import downloadMedia from "../utils/downloadMedia";
 
 
 
@@ -42,7 +43,7 @@ const MessageBubble = ({ msg, retryMessage, openViewer,  user }: Props) => {
           borderRadius: 12,
           backgroundColor: isMyMessage
           ? "#fbcbff"
-          : "#E5E5EA",
+          : "#fff",
         }}
       >
     
@@ -155,48 +156,32 @@ const MessageBubble = ({ msg, retryMessage, openViewer,  user }: Props) => {
                 minute: "2-digit",
               })}
           </Text>
-
-          <Text>
-            {msg.status === "sending" && "🕓"}
-            {msg.status === "processing" && "🕓"}
-            {msg.status === "sent" && "✓"}
-            {msg.status === "delivered" && "✓✓"}
-            {msg.status === "viewed" && "💙✓✓"}
-          </Text>
+          
+          {
+            isMyMessage && (
+              <Text>
+                {msg.status === "sending" && "🕓"}
+                {msg.status === "processing" && "🕓"}
+                {msg.status === "sent" && "✓"}
+                {msg.status === "delivered" && "✓✓"}
+                {msg.status === "viewed" && "💙✓✓"}
+              </Text>
+            )
+          }
         </View>
       </View>
 
-      {/* {viewer && (
-        <TouchableOpacity
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 10,
-          }}
-          onPress={() => setViewer(null)}
-        >
-          {viewer.type === "image" && (
-            <Image
-              source={{ uri: viewer.uri }}
-              style={{ width: "100%", height: 400 }}
-              resizeMode="contain"
-            />
-          )}
-
-          {viewer.type === "video" && (
-            <Video
-              source={{ uri: viewer.uri }}
-              style={{ width: "100%", height: 400 }}
-              controls
-            />
-          )}
-        </TouchableOpacity>
-      )} */}
+      <TouchableOpacity
+        onPress={() => {
+          const uri =
+            msg.media?.remoteUri ||
+            msg.media?.url;
+          if (!uri) return;
+          downloadMedia(uri);
+        }}
+      >
+      <Text style={{ color: "blue" }}>Download</Text>
+    </TouchableOpacity>
     </View>
   );
 };
