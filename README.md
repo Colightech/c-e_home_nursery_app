@@ -40,6 +40,7 @@
 16. npm install react-native-nitro-sound
 17. npm install react-native-nitro-modules
 18. npm install @react-navigation/bottom-tabs
+19. npm install @react-native-camera-roll/camera-roll react-native-fs
 
 ## NOT INSTALL YET
 13. npm install react-native-maps
