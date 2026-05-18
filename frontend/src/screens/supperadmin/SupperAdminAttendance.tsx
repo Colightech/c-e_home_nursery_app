@@ -19,6 +19,7 @@ import Avatar from "../../components/Avater";
 import getFormattedDateTime from "../../utils/getFormattedDateTime";
 
 
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 
@@ -105,7 +106,7 @@ const SupperAdminAttendance = () => {
           <Ionicons name="chevron-back" size={25} color="#fff" />
         </TouchableOpacity>
       </View>
-       <ScrollView>
+      <ScrollView>
         <Text style={styles.title}>Today's </Text>
         <Text style={styles.liveTime}>{time} Attendance</Text>
 
@@ -192,7 +193,7 @@ const SupperAdminAttendance = () => {
                   </View>
                 )
               }
-             
+            
 
             </View>
             );
@@ -267,7 +268,7 @@ const SupperAdminAttendance = () => {
                 setSelectedChild(null);
               }}
             >
-               <Text style={styles.confirmBtnText}>{loading ? "Confirming..." : "Confirm"}</Text>
+              <Text style={styles.confirmBtnText}>{loading ? "Confirming..." : "Confirm"}</Text>
             </TouchableOpacity>
 
             

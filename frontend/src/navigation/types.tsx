@@ -36,3 +36,19 @@ export type RootStackParamList = {
 
 
 
+export type UserRole =
+  | "super-admin"
+  | "admin"
+  | "caregiver"
+  | "parent";
+
+
+
+export type TabItem = {
+  name: string;
+  icon: string;
+  component: React.ComponentType<any>;
+};
+
+
+

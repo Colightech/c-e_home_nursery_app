@@ -12,6 +12,7 @@ import Avatar from '../../components/Avater';
 import ChildrenDetails from '../../components/ChildrenDetails';
 import { Child } from '../../store/types'
 
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 

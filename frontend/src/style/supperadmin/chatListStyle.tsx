@@ -46,7 +46,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 10,
         marginTop: 20,
-        borderRadius: 20,
     },
     name : { 
         fontSize: 16, fontWeight: "600",

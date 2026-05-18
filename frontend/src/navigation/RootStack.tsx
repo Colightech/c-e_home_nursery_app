@@ -10,7 +10,7 @@ import ParentStack from "../screens/parent/ParentStack";
 
 const Stack = createNativeStackNavigator();
 
-const AppNavigator = () => {
+const RootStack = () => {
   return (
    <NavigationContainer>
       <Stack.Navigator initialRouteName="login">
@@ -31,4 +31,4 @@ const AppNavigator = () => {
   );
 };
 
-export default AppNavigator;
+export default RootStack;

@@ -59,7 +59,7 @@ const MessageBubble = ({ msg, retryMessage, openViewer,  user }: Props) => {
 
         {/* PROGRESS SECTION IN PROGRESS */}
         {/* UPLOADING */}
-        {msg.status === "sending" && (
+        {msg.messageType !== "text" && msg.status === "sending" && (
           <View style={{ marginBottom: 2 }}>
             <Text style={styles.progress}>
               Uploading... {msg.progress || 0}%
@@ -67,7 +67,7 @@ const MessageBubble = ({ msg, retryMessage, openViewer,  user }: Props) => {
           </View>
         )}
         {/* PROCESSING */}
-        {msg.status === "processing" && (
+        {msg.messageType !== "text" && msg.status === "sending" && (
           <View style={{ marginBottom: 2 }}>
             <Text style={styles.progress}>
               Processing media...
@@ -75,7 +75,7 @@ const MessageBubble = ({ msg, retryMessage, openViewer,  user }: Props) => {
           </View>
         )}
         {/* FAILED */}
-        {msg.status === "failed" && (
+        {msg.messageType !== "text" && msg.status === "sending" && (
           <View style={{ marginBottom: 2 }}>
             <Text style={{ fontSize: 15, color: "red"}}>
               Failed to send
@@ -141,7 +141,7 @@ const MessageBubble = ({ msg, retryMessage, openViewer,  user }: Props) => {
             )
           }
 
-        {msg.status === "failed" && retryMessage && (
+        {msg.messageType !== "text" && msg.status === "failed" && retryMessage && (
           <TouchableOpacity onPress={() => retryMessage(msg)}>
             <Text style={styles.retry}>
               Retry

@@ -9,6 +9,7 @@ import useChatStore from "../../store/useChatStore";
 import styles from "../../style/supperadmin/chatListStyle";
 import Avatar from "../../components/Avater";
 
+
 type NavigationProp =
   NativeStackNavigationProp<
     RootStackParamList,
@@ -149,7 +150,6 @@ const ChatListScreen = () => {
         </View>
 
       </ScrollView>
-
     </View>
   );
 };

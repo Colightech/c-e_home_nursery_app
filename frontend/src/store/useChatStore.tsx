@@ -98,24 +98,26 @@ const useChatStore = create<any>()(
 
             try {
                 const res = await axiosInstance.post("/chat/send-message", payload);
-
-                console.log("SEND MESSAGE RESPONSE IN STORE:", res.data);
-
                 const newMessage = res.data?.message;
-
                 if (!newMessage) throw new Error("No message returned");
 
                 set((state: any) => ({
                     messages: state.messages.map((msg: any) =>
-                        msg._id === payload.tempId ? newMessage : msg
+                        msg._id === payload.tempId
+                            ? {
+                                ...newMessage,
+                                _id: newMessage._id, // important
+                                status: "sent",
+                            }
+                            : msg
                     ),
                     loading: false,
                 }));
 
-                socket.emit("send_message", newMessage);
-
                 return res.data; // return full response
+                
             } catch (error: any) {
+                console.log("SEND MESSAGE ERROR:", error?.response?.data || error.message);
                 set({ loading: false });
 
                 set((state: any) => ({

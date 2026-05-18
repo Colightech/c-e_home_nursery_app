@@ -5,7 +5,8 @@ const conversationModel = require("../model/conversationModel");
 const messageModel = require("../model/messageModel");
 const cloudinary = require("../lib/cloudinary");
 const usersModel = require("../model/usersModel");
-const { io, onlineUsers } = require("../server");
+const { getIO, onlineUsers } = require("../lib/socketStore");
+
 
 
 
@@ -54,7 +55,7 @@ const getOrCreateConversation = async ( user1, user2 ) => {
 
 const sendMessage = async (req, res) => {
   try {
-    const { receiverId, text, messageType, media } = req.body;
+    const { receiverId, text, messageType, media, tempId } = req.body;
 
     if (!receiverId || !messageType) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -72,16 +73,25 @@ const sendMessage = async (req, res) => {
         : undefined,
     });
 
-    // REAL TIME HANDSHAKE
-    const senderSocketId = onlineUsers.get(
-      message.sender.toString()
-    );
-    if (senderSocketId) {
-      io.to(senderSocketId).emit( "message_delivered", {
-          messageId: message._id,
+
+    // SEND TO RECEIVER, REAL TIME HANDSHAKE
+    // const receiverSocketId = onlineUsers.get(receiverId);
+    // const io = getIO();
+    // if (receiverSocketId) {
+    //   io.to(receiverSocketId).emit("receive_message", {
+    //     ...message.toObject(),
+    //     receiverId,
+    //   });
+    // }
+
+         // ONLY SEND MESSAGE TO RECEIVER
+        const receiverSocketId = onlineUsers.get(receiverId);
+        console.log("ONLINE USERS:", onlineUsers);
+        const io = getIO();
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("receive_message", message);
         }
-      );
-    }
+
 
 
     convo.lastMessage = message._id;

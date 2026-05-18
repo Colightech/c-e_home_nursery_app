@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import useAdminStore from "../../store/useAdminStore";
 import StatCard from "../../components/StatCard";
@@ -8,15 +8,8 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation/types";
 
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-
-const bottomItems = [
-  {id: 1, label: "Home", icon: (<Ionicons name="home-outline" size={25} color="black" />) },
-  {id: 2, label: "Chat", icon: (<Ionicons name="chatbubble-outline" size={25} color="black" />) },
-  {id: 3, label: "Children", icon: (<Ionicons name="people-outline" size={25} color="black" />) },
-  {id: 4, label: "Attendance", icon: (<Ionicons name="school-outline" size={25} color="black" />) }
-]
 
 
 
@@ -27,12 +20,14 @@ const SupperAdminScreen = () => {
     const loading = useAdminStore((state) => state.loading);
     const error = useAdminStore((state) => state.error);
 
-
+    
     const navigation = useNavigation<NavigationProp>()
 
   useEffect(() => {
     fetchStats();
   }, []);
+
+ 
 
   return (
     <View style={{ flex: 1 }}>
@@ -90,39 +85,6 @@ const SupperAdminScreen = () => {
           <View style={styles.startCard}><StatCard title="Revenue" value={stats.revenue} /></View>
         </View>
       </ScrollView>
-
-      {/* BOTTOM NAVIGATION */}
-      <View style={styles.bottomNavContainer}>
-        {
-          bottomItems.map((item, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={styles.bottomNavItem}
-              onPress={() => {
-                switch (index) {
-                  case 0:
-                    navigation.replace("supperAdminHome");
-                    break;
-                  case 1:
-                    navigation.replace("chatlistscreen");
-                    break;
-                  case 2:
-                    navigation.replace("adminchildren");
-                    break;
-                  case 3:
-                    navigation.replace("supperattendance");
-                    break;
-                  // default:
-                  //   navigation.replace("supperadmin");
-                }
-              }}
-            >
-                <View style={styles.icon}>{item.icon}</View>
-                <Text>{item.label}</Text>
-            </TouchableOpacity>
-          ))
-        }
-      </View>
     </View>
   );
 };

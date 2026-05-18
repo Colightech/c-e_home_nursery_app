@@ -4,6 +4,8 @@ const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
+const { setIO, onlineUsers } = require("./lib/socketStore");
+
 
 const connectDB = require("./utils/dbConnection");
 
@@ -60,11 +62,7 @@ const io = new Server(server, {
   },
 });
 
-/**
- * Store online users
- * userId => socketId
- */
-const onlineUsers = new Map();
+setIO(io);
 
 /* =========================
    SOCKET EVENTS
@@ -79,30 +77,25 @@ io.on("connection", (socket) => {
     io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
   });
 
-  // Send message event
-  socket.on("send_message", (data) => {
-    const { receiverId } = data;
 
-    const receiverSocketId = onlineUsers.get(receiverId);
+  socket.on("message_received_ack", ({ messageId, senderId }) => {
+    const senderSocketId = onlineUsers.get(senderId);
 
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("receive_message", data);
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("message_delivered", {
+        messageId,
+      });
     }
   });
-
 
 
   socket.on("message_viewed", async ({ messageId, senderId }) => {
     const senderSocketId = onlineUsers.get(senderId);
 
     if (senderSocketId) {
-      io.to(senderSocketId).emit(
-        "message_viewed",
-        { messageId }
-      );
+      io.to(senderSocketId).emit("message_viewed", { messageId });
     }
   });
-
 
   // Typing indicator (optional but real-world standard)
   socket.on("typing", ({ receiverId }) => {

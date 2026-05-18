@@ -39,6 +39,7 @@
 15. npm install react-native-permissions
 16. npm install react-native-nitro-sound
 17. npm install react-native-nitro-modules
+18. npm install @react-navigation/bottom-tabs
 
 ## NOT INSTALL YET
 13. npm install react-native-maps
