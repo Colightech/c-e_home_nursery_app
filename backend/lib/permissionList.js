@@ -21,6 +21,8 @@ const basePermissions = {
     "create_daycare",
     "view_daycare",
     "update_daycare",
+    "create_payment",
+    "view_payment"
   ],
 
   caregiver: [
@@ -40,7 +42,8 @@ const basePermissions = {
     "view_activity",
     "send_message",
     "view_message",
-    "view_users"
+    "view_users",
+    "view_payment"
   ]
 };
 

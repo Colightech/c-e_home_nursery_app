@@ -70,8 +70,7 @@ const useAdminStore = create<AdminState>()((set) => ({
     set({ loading: true, error: null });
 
     try {
-      const res = await axiosInstance.get("/daycare");
-
+      const res = await axiosInstance.get("/daycare/fetch-daycare");
       set({ daycare: res.data.data, loading: false });
 
     } catch (error) {

@@ -28,9 +28,11 @@ const AddUserScreen = () => {
 
     const fetchDaycare = useAdminStore((s) => s.fetchDaycare);
     const daycare = useAdminStore((s) => s.daycare);
-
-    // console.log("daycare response", daycare);
    
+
+    // console.log("daycare in add user componet", daycare);
+   
+
 
     const register = useAuthStore((s) => s.register);
     const loading = useAuthStore((s) => s.loading);
@@ -88,6 +90,7 @@ const AddUserScreen = () => {
     const [doctorPhone, setDoctorPhone] = useState("");
     const [doctorAddress, setDoctorAddress] = useState("");
 
+   
     useEffect(() => {
       if (success || error) {
         const timer = setTimeout(() => {

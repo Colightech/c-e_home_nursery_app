@@ -17,6 +17,8 @@ import MessageBubble from "../../components/MessageBubble";
 import Avatar from "../../components/Avater";
 import  requestMediaPermission  from "../../utils/requestMediaPermission";
 import Video from "react-native-video";
+import saveToGallery from "../../utils/saveToGallery";
+
 
 
 type NavigationProp = NativeStackNavigationProp<
@@ -29,9 +31,10 @@ type ChatRouteProp = RouteProp<
     "chatroom"
   >;
 
-    type ViewerState = {
+  type ViewerState = {
     uri: string;
     type: any["messageType"];
+    message: any;
   };
 
 
@@ -62,6 +65,13 @@ const ChatRoom = () => {
   const getMessages = useChatStore((state) => state.getMessages);
   const uploadMedia = useChatStore((state) => state.uploadMedia);
 
+  const setOnlineUsers = useChatStore((state) => state.setOnlineUsers);
+  const onlineUsers = useChatStore((state) => state.onlineUsers);
+
+   console.log("onlineUsers response", onlineUsers);
+
+  const isReceiverOnline = onlineUsers.includes(receiverId);
+  console.log("isReceiverOnline response", isReceiverOnline);
 
   // console.log("messages response", messages);
   // console.log("user response", user);
@@ -80,57 +90,21 @@ const ChatRoom = () => {
   }, [conversationId]);
 
 
-  // useEffect(() => {
-  //   // ONLY clear if conversation already exists
-  //   if (conversationId) {
-  //     useChatStore.setState({
-  //       messages: [],
-  //     });
-  //     getMessages(conversationId);
-  //   }
-  // }, [conversationId]);
+  
 
-
-  // useEffect(() => {
-  //   if (!conversationId) return;
-
-  //   getMessages(conversationId);
-  // }, [conversationId]);
-
-
+  // Send login user to backend
   useSocket(user?._id || "");
 
 
   //SOCKET LISTENERS
   useEffect(() => {
 
-    // socket.on("receive_message", (message) => {
-    //   useChatStore.setState((state: any) => {
-    //     const exists = state.messages.find(
-    //       (m: any) => m._id === message._id
-    //     );
+      //Recieve the list users online
+      socket.on("getOnlineUsers", (onlineUsers) => {
+        console.log("ONLINE USERS FROM SERVER:", onlineUsers);
 
-    //     if (exists) return state;
-
-    //     const msgConversationId = message.conversationId?.toString();
-    //     const currentConversationId = conversationId?.toString();
-
-    //     // ALLOW FIRST MESSAGE
-    //     if (
-    //       currentConversationId &&
-    //       msgConversationId !== currentConversationId
-    //     ) {
-    //       return state;
-    //     }
-    //     return {
-    //       messages: [
-    //         ...state.messages,
-    //         { ...message, status: "delivered" },
-    //       ],
-    //     };
-    //   });
-    // });
-
+       setOnlineUsers(onlineUsers);
+      });
 
     socket.on("receive_message", (message) => {
       useChatStore.setState((state: any) => {
@@ -186,6 +160,7 @@ const ChatRoom = () => {
 
 
     return () => {
+      socket.off("getOnlineUsers");
       socket.off("receive_message");
       socket.off("message_delivered");
       socket.off("message_viewed");
@@ -551,15 +526,21 @@ const ChatRoom = () => {
   };
 
 
-
   const openViewer = (msg: any) => {
-    const uri = msg.media?.remoteUri || msg.media?.localUri || msg.media?.url;
+    const uri =
+      msg.media?.remoteUri ||
+      msg.media?.localUri ||
+      msg.media?.url;
+
     if (!uri) return;
+
     setViewer({
       uri,
       type: msg.messageType,
+      message: msg,
     });
   };
+
 
 
 
@@ -577,9 +558,20 @@ const ChatRoom = () => {
             imageUrl=""
             name={receiverName}
           />
-          <Text style={styles.name}>
-            {receiverName}
-          </Text>
+          <View style={styles.nameAndRealTimeContainer}>
+            <Text style={styles.name}>
+              {receiverName}
+            </Text>
+            <View style={styles.onlineOfflineContainer}>
+              {
+                isReceiverOnline ? (
+                  <Text style={styles.online}>online</Text>
+                ) : (
+                  <Text style={styles.offline}>offline</Text>
+                )
+              }
+            </View>
+          </View>
         </View>
       </View>
 
@@ -600,7 +592,7 @@ const ChatRoom = () => {
               source={{ uri: viewer.uri }}
               style={{ width: "100%", height: "100%" }}
               resizeMode="contain"
-            />
+            />          
           )}
 
           {viewer.type === "video" && (
@@ -611,6 +603,17 @@ const ChatRoom = () => {
               resizeMode="contain"
             />
           )}
+
+          {/* MEDIA DOWNLOAD */}
+          <TouchableOpacity
+            onPress={() => saveToGallery(viewer.uri)}
+            style={styles.download}
+          >
+            <Text style={styles.downloadText}
+            >
+              Save
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 

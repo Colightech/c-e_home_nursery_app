@@ -54,6 +54,7 @@ const getOrCreateConversation = async ( user1, user2 ) => {
 
 
 const sendMessage = async (req, res) => {
+  
   try {
     const { receiverId, text, messageType, media, tempId } = req.body;
 
@@ -74,19 +75,9 @@ const sendMessage = async (req, res) => {
     });
 
 
-    // SEND TO RECEIVER, REAL TIME HANDSHAKE
-    // const receiverSocketId = onlineUsers.get(receiverId);
-    // const io = getIO();
-    // if (receiverSocketId) {
-    //   io.to(receiverSocketId).emit("receive_message", {
-    //     ...message.toObject(),
-    //     receiverId,
-    //   });
-    // }
-
          // ONLY SEND MESSAGE TO RECEIVER
         const receiverSocketId = onlineUsers.get(receiverId);
-        console.log("ONLINE USERS:", onlineUsers);
+        // console.log("ONLINE USERS:", onlineUsers);
         const io = getIO();
         if (receiverSocketId) {
           io.to(receiverSocketId).emit("receive_message", message);

@@ -4,7 +4,8 @@ import { View, Text, Image, TouchableOpacity } from "react-native";
 import styles from "../style/supperadmin/chatRoomStyle";
 import type { Message, User } from "../store/types";
 import Video from "react-native-video";
-import downloadMedia from "../utils/downloadMedia";
+
+
 
 
 
@@ -62,12 +63,12 @@ const MessageBubble = ({ msg, retryMessage, openViewer,  user }: Props) => {
         {msg.messageType !== "text" && msg.status === "sending" && (
           <View style={{ marginBottom: 2 }}>
             <Text style={styles.progress}>
-              Uploading... {msg.progress || 0}%
+              Sending... {msg.progress || 0}%
             </Text>
           </View>
         )}
         {/* PROCESSING */}
-        {msg.messageType !== "text" && msg.status === "sending" && (
+        {msg.messageType !== "text" && msg.status === "processing" && (
           <View style={{ marginBottom: 2 }}>
             <Text style={styles.progress}>
               Processing media...
@@ -75,7 +76,7 @@ const MessageBubble = ({ msg, retryMessage, openViewer,  user }: Props) => {
           </View>
         )}
         {/* FAILED */}
-        {msg.messageType !== "text" && msg.status === "sending" && (
+        {msg.messageType !== "text" && msg.status === "failed" && (
           <View style={{ marginBottom: 2 }}>
             <Text style={{ fontSize: 15, color: "red"}}>
               Failed to send
@@ -148,7 +149,6 @@ const MessageBubble = ({ msg, retryMessage, openViewer,  user }: Props) => {
             </Text>
           </TouchableOpacity>
         )}
-
         <View style={styles.timeAndStatus}>
           <Text style={styles.time}>
             {new Date( msg.createdAt ).toLocaleTimeString([], {
@@ -170,18 +170,6 @@ const MessageBubble = ({ msg, retryMessage, openViewer,  user }: Props) => {
           }
         </View>
       </View>
-
-      <TouchableOpacity
-        onPress={() => {
-          const uri =
-            msg.media?.remoteUri ||
-            msg.media?.url;
-          if (!uri) return;
-          downloadMedia(uri);
-        }}
-      >
-      <Text style={{ color: "blue" }}>Download</Text>
-    </TouchableOpacity>
     </View>
   );
 };

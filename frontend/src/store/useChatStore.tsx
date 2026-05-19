@@ -18,8 +18,12 @@ const useChatStore = create<any>()(
         chatUsers: [],
         searchResults: [],
         isFlushing: false,
+        onlineUsers: [],
 
 
+        setOnlineUsers: (users: string[]) => 
+            set({ onlineUsers: users }),
+           
 
 
         getChatUsers: async () => {

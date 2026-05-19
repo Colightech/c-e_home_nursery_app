@@ -10,7 +10,8 @@ const getDevice = require("../lib/getDevice");
 const createDaycare = async (req, res) => {
   try {
 
-    const {   name, address, phone, email, capacity, owner} = req.body;
+    const {   name, address, phone, email, capacity} = req.body;
+
 
     if (req.user.role !== "super-admin" && req.user.role !== "admin") {
         return res.status(403).json({
@@ -22,7 +23,7 @@ const createDaycare = async (req, res) => {
     let ownerId;
 
     if (req.user.role === "super-admin") {
-        ownerId = req.body.owner; // assign to admin
+        ownerId = req.user.id; // assign to admin
     } else {
         ownerId = req.user.id; // admin creates for self
     }
@@ -98,7 +99,7 @@ const getAllDaycares= async (req, res) => {
       deletedAt: null,
     }).populate("owner", "firstName lastName email");
 
-    res.json({
+    return res.status(201).json({
       count: daycares.length,
       data: daycares,
     });

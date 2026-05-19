@@ -15,6 +15,8 @@ const dashboardRoute = require("./routes/dashboardRoute");
 const attendanceRoute = require("./routes/attendanceRoute");
 const daycareRoute = require("./routes/daycareRoute");
 const chatRoute = require("./routes/chatRoute");
+const paymentRoute = require("./routes/paymentRoute");
+
 
 const port = process.env.PORT || 5000;
 
@@ -49,6 +51,8 @@ app.use("/api/dashboard", dashboardRoute);
 app.use("/api/attendance", attendanceRoute);
 app.use("/api/daycare", daycareRoute);
 app.use("/api/chat", chatRoute);
+app.use("/api/payments", paymentRoute);
+
 
 /* =========================
    HTTP SERVER + SOCKET.IO
@@ -73,14 +77,14 @@ io.on("connection", (socket) => {
   // User joins chat system
   socket.on("addUser", (userId) => {
     onlineUsers.set(userId, socket.id);
-
+   
     io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
   });
 
-
+  
   socket.on("message_received_ack", ({ messageId, senderId }) => {
     const senderSocketId = onlineUsers.get(senderId);
-
+  
     if (senderSocketId) {
       io.to(senderSocketId).emit("message_delivered", {
         messageId,

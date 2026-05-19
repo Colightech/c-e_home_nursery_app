@@ -17,27 +17,6 @@ const useAuthStore = create<AuthState>()(
 
 
     // LOGIN
-    // login: async (email, password) => {
-    //   set({ loading: true, error: null });
-    //   try {
-    //     const res = await axiosInstance.post("/auth/login", { email, password });
-    //      console.log("res response in useAuthStore", res);
-    //     set({ 
-    //       user: res.data, 
-    //       loading: false,
-    //       success: "Login successfully",
-    //     });
-    //     return res.data;
-    //   } catch (error) {
-    //     const message = axios.isAxiosError(error)
-    //       ? error.response?.data?.message || error.message
-    //       : "Something went wrong";
-    //     set({ error: message, loading: false });
-    //     return { error: true, message };
-    //   }
-    // },
-
-
     login: async (email, password) => {
       set({ loading: true, error: null, success: null});
 
@@ -61,29 +40,6 @@ const useAuthStore = create<AuthState>()(
         return {error: true, message};
       }
     },
-
-
-    // register: async (data) => {
-    //   set({ loading: true, error: null });
-
-    //   try {
-    //     const res = await axiosInstance.post("/auth/register", data);
-
-    //     set({ 
-    //       loading: false,
-    //       success: "User created successfully",
-    //       });
-    //     return res.data;
-
-    //   } catch (error) {
-    //     const message = axios.isAxiosError(error)
-    //       ? error.response?.data?.message || error.message
-    //       : "Something went wrong";
-
-    //     set({ error: message, loading: false, success: null });
-    //     return { error: true, message };
-    //   }
-    // },
 
 
     register: async (data) => {

@@ -106,6 +106,33 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginTop: 7,
     },
+    nameAndRealTimeContainer: {        
+    },
+    onlineOfflineContainer: {
+        marginLeft: 10
+    },
+    online: {
+        color: "#78db07",
+        fontWeight: "500",
+    },
+    offline: {
+        color: "#898a87",
+        fontWeight: "500",
+    },
+    download: {
+        position: "absolute",
+        bottom: 10,
+        left: 20,
+        zIndex: 999,
+        backgroundColor: "rgba(0,0,0,0.6)",
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        borderRadius: 20,          
+    },
+    downloadText: {
+        color: "white",
+        fontWeight: "bold",          
+    },
 
 
 
