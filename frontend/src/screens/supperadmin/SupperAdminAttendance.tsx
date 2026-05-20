@@ -17,6 +17,7 @@ import useAttendanceStore from "../../store/useAttendanceStore";
 import useAdminStore from "../../store/useAdminStore";
 import Avatar from "../../components/Avater";
 import getFormattedDateTime from "../../utils/getFormattedDateTime";
+import LoadingSpinner from "../../utils/LoadingSpinner";
 
 
 
@@ -155,7 +156,7 @@ const SupperAdminAttendance = () => {
               {/* RIGHT (UNCHANGED LOGIC) */}
               {
                 loading ? (
-                  <Text>Loading...</Text>
+                  <Text> <LoadingSpinner size="small" /> </Text>
                 ) : (
                   <View style={styles.right}>
 
@@ -200,7 +201,7 @@ const SupperAdminAttendance = () => {
         })}
 
 
-        {loading && <Text>Processing...</Text>}
+        {loading && <Text><LoadingSpinner fullScreen/></Text>}
       </ScrollView>
 
       {modalVisible && (

@@ -11,6 +11,7 @@ import useAdminStore from '../../store/useAdminStore';
 import Avatar from '../../components/Avater';
 import ChildrenDetails from '../../components/ChildrenDetails';
 import { Child } from '../../store/types'
+import LoadingSpinner from '../../utils/LoadingSpinner';
 
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -38,7 +39,7 @@ const AdminChildren = () => {
     <ScrollView style={styles.container}>
       {
         loading ? (
-          <Text style={styles.loadingText}>Loading....</Text>
+          <Text style={styles.loadingText}><LoadingSpinner fullScreen/> </Text>
         ) : (
           <View >
             <TouchableOpacity

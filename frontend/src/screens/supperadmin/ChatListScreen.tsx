@@ -116,46 +116,40 @@ const ChatListScreen = () => {
         )}
 
         {/* EXISTING CHATS */}
-        {
-          loading ? (
-            <LoadingSpinner fullScreen />
-          ) : (
-            <View>
-              {
-                search.trim() === "" && (
-                  <View>
-                    {chatUsers.map((item: any) => (
-                      <Pressable
-                        key={item._id}
-                        onPress={() => openChat(item)}
-                        style={({ pressed }) => [
-                          styles.chatsItemContainer,
-                          pressed && {
-                            backgroundColor: "#aaa", 
-                            opacity: 0.7,
-                          },
-                        ]}
-                      >
-                        <Avatar
-                          imageUrl={item.profilePicture}
-                          name={`${item.firstName} ${item.lastName}`}
-                        />
-                        <View style={styles.chatsItem}>
-                          <Text style={styles.name}>
-                            {item.firstName} {item.lastName}
-                          </Text>
-                          <Text>
-                            {item.role}
-                          </Text>
-                        </View>
-                      </Pressable>
-                    ))}
-                  </View>
-                )
-              }
-            </View>
-          )
-        }
+        <View>
+          {
+            search.trim() === "" && (
+              <View>
+                {chatUsers.map((item: any) => (
+                  <Pressable
+                    key={item._id}
+                    onPress={() => openChat(item)}
+                    style={({ pressed }) => [
+                      styles.chatsItemContainer,
+                      pressed && {
+                        backgroundColor: "#aaa", 
+                        opacity: 0.7,
+                      },
+                    ]}
+                  >
+                    <Avatar
+                      imageUrl={item.profilePicture}
+                      name={`${item.firstName} ${item.lastName}`}
+                    />
+                    <View style={styles.chatsItem}>
+                      <Text style={styles.name}>
+                        {item.firstName} {item.lastName}
+                      </Text>
+                      <Text>
+                        {item.role}
+                      </Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            )
+          }
+        </View>
       </ScrollView>
     </View>
   );
