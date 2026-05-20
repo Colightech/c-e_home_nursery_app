@@ -136,6 +136,22 @@ const SupperAdminPayment = () => {
     };
 
 
+    const renderStatus = (status: string) => {
+        switch (status) {
+        case "due":
+            return "🔴 PAYMENT DUE";
+        case "awaiting_admin":
+            return "🟡 WAITING ADMIN CONFIRMATION";
+        case "paid":
+            return "🟢 PAID";
+        case "overdue":
+            return "⚠️ OVERDUE";
+        default:
+            return status;
+        }
+    };
+
+
 
     return (
         <ScrollView
@@ -313,7 +329,7 @@ const SupperAdminPayment = () => {
                             </Text>
 
                             <Text>
-                                Status: {item.status}
+                                Status: {renderStatus(item.status)}
                             </Text>
 
                             <Text>
@@ -323,6 +339,11 @@ const SupperAdminPayment = () => {
                             <Text>
                                 dueDate:  {" "} {new Date(item.dueDate).toDateString()}
                             </Text>
+                             {item.status === "paid" && (
+                                <Text style={{ color: "green", marginTop: 10 }}>
+                                     Payment Confirmed ✔
+                                </Text>
+                            )}
 
 
 

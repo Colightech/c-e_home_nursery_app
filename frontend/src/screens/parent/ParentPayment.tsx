@@ -58,7 +58,7 @@ const ParentPayment = () => {
         case "due":
             return "🔴 PAYMENT DUE";
         case "awaiting_admin":
-            return "🟡 WAITING ADMIN";
+            return "🟡 WAITING ADMIN CONFIRMATION";
         case "paid":
             return "🟢 PAID";
         case "overdue":
@@ -84,7 +84,7 @@ const ParentPayment = () => {
             }}
           >
             <Text>Child: {item.childId?.firstName} {item.childId?.lastName}</Text>
-            <Text>Amount: ₦{item.amount}</Text>
+            <Text>Amount: £{item.amount}</Text>
             <Text>Due: {new Date(item.dueDate).toDateString()}</Text>
 
             <Text style={{ marginVertical: 5 }}>
@@ -141,7 +141,8 @@ const ParentPayment = () => {
                 }}
               >
                 <Text style={{ color: "#fff", textAlign: "center"  }}>
-                  I HAVE MADE PAYMENT
+                  
+                  {openedPaymentId === item._id ? "LOADING PAYMENT STATUS...." : "I HAVE MADE PAYMENT"}
                 </Text>
               </TouchableOpacity>
             )}
