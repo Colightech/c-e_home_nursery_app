@@ -8,6 +8,8 @@ import type { RootStackParamList} from "../../navigation/types";
 import useChatStore from "../../store/useChatStore";
 import styles from "../../style/supperadmin/chatListStyle";
 import Avatar from "../../components/Avater";
+import LoadingSpinner from "../../utils/LoadingSpinner";
+import useAuthStore from "../../store/useAuthStore";
 
 
 type NavigationProp =
@@ -26,6 +28,7 @@ const ChatListScreen = () => {
   const getChatUsers = useChatStore((state) => state.getChatUsers);
   const searchUsers = useChatStore((state) => state.searchUsers);
   const findConversation = useChatStore((state) => state.findConversation);
+  const loading = useChatStore((state) => state.loading);
 
   // console.log("searchResults response", searchResults);
   // console.log("chatUsers response", chatUsers);
@@ -113,42 +116,46 @@ const ChatListScreen = () => {
         )}
 
         {/* EXISTING CHATS */}
-        <View>
-          {
-            search.trim() === "" && (
-              <View>
-                {chatUsers.map((item: any) => (
-                  <Pressable
-                    key={item._id}
-                    onPress={() => openChat(item)}
-                    style={({ pressed }) => [
-                      styles.chatsItemContainer,
-                      pressed && {
-                        backgroundColor: "#aaa", 
-                        opacity: 0.7,
-                      },
-                    ]}
-                  >
-                    <Avatar
-                      imageUrl={item.profilePicture}
-                      name={`${item.firstName} ${item.lastName}`}
-                    />
-                    <View style={styles.chatsItem}>
-                      <Text style={styles.name}>
-                        {item.firstName} {item.lastName}
-                      </Text>
-                      <Text>
-                        {item.role}
-                      </Text>
-                    </View>
-                  </Pressable>
-                ))}
-              </View>
-            )
-          }
-          
-        </View>
-
+        {
+          loading ? (
+            <LoadingSpinner fullScreen />
+          ) : (
+            <View>
+              {
+                search.trim() === "" && (
+                  <View>
+                    {chatUsers.map((item: any) => (
+                      <Pressable
+                        key={item._id}
+                        onPress={() => openChat(item)}
+                        style={({ pressed }) => [
+                          styles.chatsItemContainer,
+                          pressed && {
+                            backgroundColor: "#aaa", 
+                            opacity: 0.7,
+                          },
+                        ]}
+                      >
+                        <Avatar
+                          imageUrl={item.profilePicture}
+                          name={`${item.firstName} ${item.lastName}`}
+                        />
+                        <View style={styles.chatsItem}>
+                          <Text style={styles.name}>
+                            {item.firstName} {item.lastName}
+                          </Text>
+                          <Text>
+                            {item.role}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    ))}
+                  </View>
+                )
+              }
+            </View>
+          )
+        }
       </ScrollView>
     </View>
   );

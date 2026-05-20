@@ -19,6 +19,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { redirectByRole } from "../utils/redirectByRole"
 import Ionicons from "react-native-vector-icons/Ionicons";
+import LoadingSpinner from "../utils/LoadingSpinner";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -101,7 +102,7 @@ const LoginScreen = () => {
 
 
   if (checkingSession) {
-    return <Text style={styles.checkingSession}>Loading....</Text>;
+    return <Text style={styles.checkingSession}> <LoadingSpinner fullScreen /></Text>;
   }
 
   return (

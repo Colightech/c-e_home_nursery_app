@@ -10,6 +10,7 @@ import styels from "../../style/supperadmin/supperAdminPaymentStyle";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import socket from "../../socket/socket";
 import useAuthStore from "../../store/useAuthStore";
+import LoadingSpinner from "../../utils/LoadingSpinner";
  
 
 
@@ -303,7 +304,7 @@ const SupperAdminPayment = () => {
             {/* PAYMENT LIST */}
             {
                 loading ? (
-                    <Text style={styels.loadingStyle}>Loading...</Text>
+                    <Text style={styels.loadingStyle}> <LoadingSpinner fullScreen /></Text>
                 ) : (
                     <FlatList
                         data={payments}

@@ -18,6 +18,7 @@ const useChatStore = create<any>()(
         chatUsers: [],
         searchResults: [],
         isFlushing: false,
+       
         onlineUsers: [],
 
 
