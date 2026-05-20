@@ -16,14 +16,10 @@ const RootStack = () => {
       <Stack.Navigator initialRouteName="login">
 
         <Stack.Screen name="login" component={LoginScreen}  options={{ headerShown: false }} />
-
         {/* Role dashboards */}
         <Stack.Screen name="supperadmin"  component={SupperAdminStack}  options={{ headerShown: false }}/>
-
         <Stack.Screen  name="admin"  component={AdminStack}  options={{ headerShown: false }}/>
-
         <Stack.Screen  name="caregiver"  component={CaregiverStack}  options={{ headerShown: false }}/>
-
         <Stack.Screen  name="parent"  component={ParentStack}  options={{ headerShown: false }}/>
 
       </Stack.Navigator>

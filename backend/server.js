@@ -67,6 +67,7 @@ const io = new Server(server, {
 });
 
 setIO(io);
+app.set("io", io);
 
 /* =========================
    SOCKET EVENTS
@@ -77,14 +78,12 @@ io.on("connection", (socket) => {
   // User joins chat system
   socket.on("addUser", (userId) => {
     onlineUsers.set(userId, socket.id);
-   
     io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
   });
 
   
   socket.on("message_received_ack", ({ messageId, senderId }) => {
     const senderSocketId = onlineUsers.get(senderId);
-  
     if (senderSocketId) {
       io.to(senderSocketId).emit("message_delivered", {
         messageId,
@@ -95,7 +94,6 @@ io.on("connection", (socket) => {
 
   socket.on("message_viewed", async ({ messageId, senderId }) => {
     const senderSocketId = onlineUsers.get(senderId);
-
     if (senderSocketId) {
       io.to(senderSocketId).emit("message_viewed", { messageId });
     }
@@ -104,7 +102,6 @@ io.on("connection", (socket) => {
   // Typing indicator (optional but real-world standard)
   socket.on("typing", ({ receiverId }) => {
     const socketId = onlineUsers.get(receiverId);
-
     if (socketId) {
       io.to(socketId).emit("typing");
     }
@@ -113,11 +110,30 @@ io.on("connection", (socket) => {
   // Stop typing
   socket.on("stopTyping", ({ receiverId }) => {
     const socketId = onlineUsers.get(receiverId);
-
     if (socketId) {
       io.to(socketId).emit("stopTyping");
     }
   });
+
+
+  // =========================
+  // ADMIN ROOM JOIN
+  // =========================
+  socket.on("join_admin_room", ({ daycareId }) => {
+    if (!daycareId) return;
+    socket.join(`admin_${daycareId}`);
+    console.log(`🟣 Admin joined room: admin_${daycareId}`);
+  });
+
+  // =========================
+  // PARENT ROOM JOIN
+  // =========================
+  socket.on("join_parent_room", ({ parentId }) => {
+    if (!parentId) return;
+    socket.join(`parent_${parentId}`);
+    console.log(`🟢 Parent joined room: parent_${parentId}`);
+  });
+
 
   // Disconnect
   socket.on("disconnect", () => {

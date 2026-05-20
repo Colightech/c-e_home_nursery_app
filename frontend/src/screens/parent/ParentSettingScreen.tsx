@@ -34,7 +34,7 @@ const ParentSettingScreen = () => {
     <View style={styles.container}>
       <View >
         <TouchableOpacity
-          onPress={() => navigation.replace("ParentHome")}
+          onPress={() => navigation.replace("parent")}
           style={styles.backIcon}
         >
           <Ionicons name="chevron-back" size={35} color="black" />

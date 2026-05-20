@@ -3,7 +3,6 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ParentSettingScreen from "./ParentSettingScreen";
 import ParentChatScreen from "./ParentChatScreen";
-
 import AppTabs from "../../navigation/AppTabs";
 
 

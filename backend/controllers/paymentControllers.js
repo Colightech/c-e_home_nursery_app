@@ -21,6 +21,8 @@ const createPayment = async (req, res) => {
         })
     }
  
+    const reference = `${accountName.slice(0,3).toUpperCase()}-${Date.now()}`;
+
     const payment = await paymentModel.create({
       childId: child._id,
       parentId: child.parentId,
@@ -35,10 +37,15 @@ const createPayment = async (req, res) => {
         accountName,
         accountNumber,
         sortCode,
-        referencePrefix: "DAYCARE",
+        referencePrefix: reference,
         serviceType: "",
       },
     });
+
+
+    const io = req.app.get("io");
+    io.to(`parent_${payment.parentId}`)
+      .emit("payment_created", payment);
 
     res.status(201).json({
       success: true,
@@ -68,14 +75,24 @@ const parentConfirmPayment = async (req, res) => {
         });
     }
 
+    if (payment.status !== "due") {
+      return res.status(400).json({
+          error: true,
+          message: "Payment already processed",
+      });
+    }
+
     payment.status = "awaiting_admin";
     payment.parentConfirmedAt = new Date();
 
     await payment.save();
 
-    // notify admin (socket optional)
+
+     // notify only admin
     const io = req.app.get("io");
-    io.emit("admin_payment_alert", payment);
+    io.to(`admin_${payment.daycareId}`)
+      .emit("parent_payment_alert", payment);
+
 
     res.json({
       success: true,
@@ -105,14 +122,22 @@ const adminConfirmPayment = async (req, res) => {
         });
     }
 
+    if (payment.status !== "awaiting_admin") {
+      return res.status(400).json({
+          error: true,
+          message: "Payment not awaiting admin confirmation",
+      });
+  }
+
     payment.status = "paid";
     payment.adminConfirmedAt = new Date();
 
     await payment.save();
 
-    // notify parent
+         // notify only concern parent
     const io = req.app.get("io");
-    io.emit("payment_confirmed", payment);
+    io.to(`parent_${payment.parentId}`)
+      .emit("payment_confirmed", payment);
 
     res.json({
       success: true,

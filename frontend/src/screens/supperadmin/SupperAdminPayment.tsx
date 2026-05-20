@@ -3,10 +3,14 @@ import {View, Text, FlatList, TouchableOpacity, TextInput,
   Alert, ScrollView,
 } from "react-native";
  import { Picker } from "@react-native-picker/picker";
+ import DatePicker from "react-native-date-picker";
 import usePaymentStore from "../../store/usePaymentStore";
 import useAdminStore from "../../store/useAdminStore";
 import styels from "../../style/supperadmin/supperAdminPaymentStyle";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import socket from "../../socket/socket";
+import useAuthStore from "../../store/useAuthStore";
+ 
 
 
 
@@ -15,34 +19,65 @@ const SupperAdminPayment = () => {
     const { payments, getAllPayments, confirmAdminPayment, createPayment, loading} = usePaymentStore();
     const fetchChildren = useAdminStore((state) => state.fetchChildren);
     const childdata = useAdminStore((state) => state.childdata);
+    const user = useAuthStore((state) => state.user);
 
     const [selectedChild, setSelectedChild] = useState<any>(null);
     const [addPayment, setAddPayment] = useState<boolean>(false);
 
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
-    const [dueDate, setDueDate] = useState("");
     const [bankName, setBankName] = useState("");
     const [accountName, setAccountName] = useState("");
     const [accountNumber, setAccountNumber] = useState("");
     const [sortCode, setSortCode] = useState("");
     const [serviceType, setServiceType] = useState("");
 
+    const [dueDate, setDueDate] = useState<Date>(new Date());
+    const [openDatePicker, setOpenDatePicker] = useState(false);
+
+
+    useEffect(() => {
+        if (user?.daycareId) {
+            socket.emit("join_admin_room", {
+                daycareId: user.daycareId,
+            });
+        }
+    }, []);
+
+
+    useEffect(() => {
+        
+        socket.on("parent_payment_alert", (payment) => {
+                console.log("ADMIN PAYMENT ALERT:", payment);
+                Alert.alert("Payment Alert", "A parent submitted payment");
+                getAllPayments();
+            }
+        );
+
+        return () => {
+            socket.off("parent_payment_alert");
+        };
+
+    }, []);
+
+
     useEffect(() => {
         getAllPayments();
         fetchChildren();
+        resetForm();
     }, []);
+
 
 
     const resetForm = () => {
         setAmount("");
         setDescription("");
-        setDueDate("");
+        setDueDate(new Date());
 
         setBankName("");
-        setAccountName("");
-        setAccountNumber("");
-        setSortCode("");
+        setAccountName("C&E Home Nursery");
+        setAccountNumber("74817860");
+        setSortCode("30-99-50");
         setServiceType("");
     }
 
@@ -68,7 +103,6 @@ const SupperAdminPayment = () => {
                 "Payment account details are required"
             );
         }
-
         const payload = {
             childId: selectedChild._id,
             amount: Number(amount),
@@ -80,10 +114,7 @@ const SupperAdminPayment = () => {
             sortCode,
             serviceType,
         };
-
-        console.log("CREATE PAYMENT PAYLOAD:",payload);
         const res = await createPayment(payload);
-        console.log( "CREATE PAYMENT RESPONSE:",res);
         if (res?.success) {
             Alert.alert(
                 "Success",
@@ -176,12 +207,32 @@ const SupperAdminPayment = () => {
                         />
 
                         {/* DUE DATE */}
-                        <TextInput
-                            placeholder="Due Date (2026-06-01)"
-                            value={dueDate}
-                            onChangeText={setDueDate}
-                            style={styels.inputStyle}
-                        />
+                        <View>
+                            <TouchableOpacity
+                                onPress={() => setOpenDatePicker(true)}
+                                style={styels.inputStyle}
+                            >
+                                <Text>
+                                    {dueDate
+                                        ? dueDate.toDateString()
+                                        : "Select Due Date"}
+                                </Text>
+                            </TouchableOpacity>
+
+                            <DatePicker
+                                modal
+                                open={openDatePicker}
+                                date={dueDate}
+                                mode="date"
+                                onConfirm={(date) => {
+                                    setOpenDatePicker(false);
+                                    setDueDate(date);
+                                }}
+                                onCancel={() => {
+                                    setOpenDatePicker(false);
+                                }}
+                            />
+                        </View>
 
                         <TextInput
                             placeholder="Bank Name"
@@ -227,7 +278,7 @@ const SupperAdminPayment = () => {
                         <Text
                             style={styels.inputText}
                         >
-                        {loading ? "Loading..." : "CREATE PAYMENT"}
+                        {loading ? "Adding Payment..." : "Add Payment"}
                         </Text>
                         </TouchableOpacity>
                     </View>
@@ -254,25 +305,23 @@ const SupperAdminPayment = () => {
                         >
 
                             <Text>
-                            Child: {item.childId?.firstName} {item.childId?.lastName}
+                                Child: {item.childId?.firstName} {item.childId?.lastName}
                             </Text>
 
                             <Text>
-                            Amount: ₦{item.amount}
+                                Amount: ₦{item.amount}
                             </Text>
 
                             <Text>
-                            Status: {item.status}
+                                Status: {item.status}
                             </Text>
 
                             <Text>
-                            Parent: {item.parentId?.fullName}
+                                Parent: {item.parentId?.firstName} {item.parentId?.lastName}
                             </Text>
 
                             <Text>
-                            Due:
-                            {" "}
-                            {new Date(item.dueDate).toDateString()}
+                                dueDate:  {" "} {new Date(item.dueDate).toDateString()}
                             </Text>
 
 
@@ -289,30 +338,18 @@ const SupperAdminPayment = () => {
                                 borderRadius: 10,
                             }}
                             >
-
-                            <Text>
-                                Bank:
-                                {" "}
-                                {item.paymentDetails?.bankName}
-                            </Text>
-
-                            <Text>
-                                Account Name:
-                                {" "}
-                                {item.paymentDetails?.accountName}
-                            </Text>
-                            <Text>
-                                Sort Code:
-                                {" "}
-                                {item.paymentDetails?.sortCode}
-                            </Text>
-
-                            <Text>
-                                Account Number:
-                                {" "}
-                                {item.paymentDetails?.accountNumber}
-                            </Text>
-
+                                <Text>
+                                    Bank:  {" "}  {item.paymentDetails?.bankName}
+                                </Text>
+                                <Text>
+                                    Account Name:  {" "}  {item.paymentDetails?.accountName}
+                                </Text>
+                                <Text>
+                                    Sort Code: {" "}  {item.paymentDetails?.sortCode}
+                                </Text>
+                                <Text>
+                                    Account Number:  {" "} {item.paymentDetails?.accountNumber}
+                                </Text>
                             </View>
 
 
@@ -341,7 +378,7 @@ const SupperAdminPayment = () => {
                                         fontWeight: "bold",
                                         }}
                                     >
-                                        PAYMENT RECEIVED
+                                        CONFORM PAYMENT RECEIVED
                                     </Text>
 
                                 </TouchableOpacity>

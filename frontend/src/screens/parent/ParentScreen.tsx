@@ -13,12 +13,6 @@ import type { RootStackParamList } from "../../navigation/types";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 
-const bottomItems = [
-  {id: 1, label: "Home", icon: (<Ionicons name="home-outline" size={25} color="black" />) },
-  {id: 2, label: "Chat", icon: (<Ionicons name="chatbubble-outline" size={25} color="black" />) },
-  {id: 3, label: "Attendance", icon: (<Ionicons name="school-outline" size={25} color="black" />) },
-]
-
 
 
 const ParentScreen = () => {
@@ -85,33 +79,6 @@ const ParentScreen = () => {
         </View>
       </ScrollView>
 
-      {/* BOTTOM NAVIGATION */}
-      <View style={styles.bottomNavContainer}>
-        {
-          bottomItems.map((item, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={styles.bottomNavItem}
-              onPress={() => {
-                switch (index) {
-                  case 0:
-                    navigation.replace("ParentHome");
-                    break;
-                  case 1:
-                    navigation.replace("parentchatlist");
-                    break;
-                  case 2:
-                    navigation.replace("parentattendance");
-                    break;
-                }
-              }}
-            >
-                <View style={styles.icon}>{item.icon}</View>
-                <Text>{item.label}</Text>
-            </TouchableOpacity>
-          ))
-        }
-      </View>
     </View>
   );
 };

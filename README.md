@@ -41,6 +41,7 @@
 17. npm install react-native-nitro-modules
 18. npm install @react-navigation/bottom-tabs
 19. npm install @react-native-camera-roll/camera-roll react-native-fs
+20. npm install react-native-date-picker
 
 ## NOT INSTALL YET
 13. npm install react-native-maps

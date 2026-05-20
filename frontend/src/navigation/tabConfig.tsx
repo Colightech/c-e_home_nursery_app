@@ -10,6 +10,7 @@ import ParentAttendance from "../screens/parent/ParentAttendance"
 
 import type { TabItem, UserRole } from "./types";
 import SupperAdminPayment from "../screens/supperadmin/SupperAdminPayment";
+import ParentPayment from "../screens/parent/ParentPayment";
 
 
 export const tabConfig: Record<UserRole, TabItem[]> = {
@@ -33,6 +34,7 @@ export const tabConfig: Record<UserRole, TabItem[]> = {
   "parent": [
     { name: "Home", component: ParentScreen, icon: "home-outline"},
     { name: "Chats", component: ParentChatListScreen, icon: "chatbubble-outline"},
+    { name: "Payment", component: ParentPayment, icon: "wallet-outline"},
     { name: "Attendance", component: ParentAttendance, icon: "school-outline"},
   ],
 };
